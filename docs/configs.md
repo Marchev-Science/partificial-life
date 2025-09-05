@@ -59,3 +59,64 @@ When saving, the app exports (at minimum):
 
 ---
 
+## Guide to every config key in your schema  
+
+---
+
+### Core world & visuals
+
+* **CANVAS\_SIZE** — world side length in pixels (square torus); also sets `<canvas>` size.
+  *Default:* `1000`. *Try:* **400–2000** (match viewport; larger spreads interactions spatially).&#x20;
+* **RADIUS** — particle draw radius (px). Affects the minimum separation via `MIN_DIST_FACTOR`.
+  *Default:* `3`. *Try:* **1–6** (bigger looks chunkier; too large + high counts can clutter).&#x20;
+* **MIN\_DIST\_FACTOR** — minimum centre distance multiplier: `MIN_DIST = RADIUS × MIN_DIST_FACTOR`. Prevents overlaps.
+  *Default:* `2`. *Try:* **1.5–3** (higher = stronger “personal space”).&#x20;
+* **COLORS** — array of 5 species `{ name, key, h }` (defines matrix row/col order and swatch hex).
+  *Default:* 5 entries (Red…Pink). Keep 5 to match UI. Edit `h` for custom palettes.&#x20;
+
+### Population
+
+* **INITIAL\_COUNT** — starting population per colour; save/export assumes equal counts.
+  *Default:* `100`. *Try:* **20–300** per colour (remember the physics is $O(N^2)$).
+* **MAX\_COUNT** — per-colour slider max in the UI.
+  *Default:* `300`. *Try:* **100–500** (raising it increases peak cost; total max ≈ `5 × MAX_COUNT`).&#x20;
+* **AUTO\_START** — if `true`, sim starts running on load.
+  *Default:* `false`. Use `true` for kiosk/demo pages.&#x20;
+
+### Interaction radius (neighborhood)
+
+* **INTERACTION\_RANGE\_INIT** — current cutoff distance $R$ for pair forces; linear falloff to zero at $R$.
+  *Default:* `20`. *Try:* **10–100** (≈ 1–10% of `CANVAS_SIZE`; too large feels globally coupled).
+* **INTERACTION\_RANGE\_MIN / MAX** — UI slider bounds for the above.
+  *Defaults:* `5` / `200`. Adjust if you change `CANVAS_SIZE` drastically.&#x20;
+
+### Dynamics (per-step)
+
+* **SPEED** — global acceleration scale applied to the summed forces.
+  *Default:* `0.05`. *Try:* **0.01–0.2** (higher = more lively but can overshoot; co-tune with `DAMP`).
+* **DAMP** — velocity damping factor per step (multiplicative).
+  *Default:* `0.95`. *Try:* **0.90–0.995** (must be $0<\text{DAMP}<1$; closer to 1 = floatier).&#x20;
+* **INTERACTIONS** — 5×5 strength matrix $k_{ab}$ in **\[−1.0, +1.0]** (step 0.1 via the number-lock UI). Diagonal = same-colour cohesion; off-diagonals = cross-colour attraction/repulsion. Asymmetry $k_{ab}\ne k_{ba}$ allowed.
+  *Default:* all zeros. *Try:* **−0.8…+0.8** for stability headroom.
+
+### Metrics & charts
+
+* **ENTROPY\_K** — $k$ for k-NN spatial entropy estimator.
+  *Default:* `3`. *Try:* **3–10** (must be < population; larger smooths but blurs local structure).&#x20;
+* **METRICS\_HISTORY\_LENGTH** — max stored points per series (older trimmed).
+  *Default:* `3000`. *Try:* **200–5000** (higher = longer sparkline memory; small CPU/RAM impact).&#x20;
+* **CHART\_UPDATE\_INTERVAL** — ms between metrics recompute + redraw.
+  *Default:* `1000`. *Try:* **200–2000** (faster updates feel more responsive but cost more).
+* **CVI\_WIN** — intended rolling-window length for the Composite Volatility Index.
+  *Default:* `40`. *Note:* in the provided build CVI is computed “instantaneously” (no explicit window), so this value isn’t referenced by the metric code. You can leave it as is or wire it into a rolling CVI (then **10–200** works well).
+
+---
+
+### Quick tuning tips
+
+* Start by setting **diagonal** `INTERACTIONS` to `+0.2…+0.6` for clustering; use small negative cross-terms for segregation.&#x20;
+* If motion jitters: lower **SPEED** or raise **DAMP** slightly.&#x20;
+* If everything “locks up”: reduce **MIN\_DIST\_FACTOR** a bit or decrease **INTERACTION\_RANGE\_INIT**.&#x20;
+
+If you want, I can bundle these as inline comments in a sample `sim-config.json` so you’ve got a ready-to-edit preset.
+
