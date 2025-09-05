@@ -73,6 +73,7 @@ For educational and research purposes [https://basaga.org/basaga_files/partifici
 ```
 index.html   # Main simulation app, UI, metrics, and simAPI
 test.html    # API test harness (embeds index.html via <iframe>)
+sim-config.json   # Example of configuration file   
 ```
 
 Both files are pure HTML+JS and can be opened directly in a browser.
