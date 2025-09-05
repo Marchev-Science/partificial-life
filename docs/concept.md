@@ -96,12 +96,10 @@ Within $r \le R$, (1) is the negative gradient of a piecewise quadratic potentia
 
 (2)
 
-
 $$
 U_{ab}(r) = -k_{ab}\left(r - \tfrac{r^2}{2R}\right), \quad
 \mathbf{F}_{i \leftarrow j} = -\frac{dU_{ab}}{dr}\,\hat{\mathbf{r}}_{ij}
 $$
-
 
 Outside range, $U_{ab}$ is constant, so no force.
 
@@ -112,9 +110,10 @@ Outside range, $U_{ab}$ is constant, so no force.
 To avoid overlap, impose a **minimum centre-to-centre distance** $r_{\min}>0$ (e.g., radius×factor).
 A simple linear penalty adds a repulsive term when $r_{ij} < r_{\min}$:
 
+(3)
+
 $$
-\mathbf{F}^{\text{sep}}_{i\leftarrow j} = \gamma\,\max(0,\,r_{\min} - r_{ij})\,\hat{\mathbf{r}}_{ij}
-\tag{3}
+\mathbf{F}^{\text{sep}}_{i\leftarrow j} = \gamma\,\max(0,\,r_{\min} - r_{ij})\hat{\mathbf{r}}_{ij}
 $$
 
 with $\gamma>0$ sufficiently large. (Many implementations apply this as an instantaneous positional correction; the linear spring form above is the continuous analogue.)
@@ -127,16 +126,19 @@ Let $m$ be particle mass (often set to $1$), $D\in(0,1]$ a **velocity damping** 
 
 Total force on particle $i$ (species $a$):
 
+(4)
+
+
 $$
 \mathbf{F}_i = \sum_{j\ne i}\bigl(\mathbf{F}_{i\leftarrow j} + \mathbf{F}^{\text{sep}}_{i\leftarrow j}\bigr)
-\tag{4}
 $$
 
 A common explicit, damped Euler update is:
 
+(5)
+
 $$
-\mathbf{v}_i^{t+1} = D\,\mathbf{v}_i^{t} + \frac{\Delta t}{m}\,\mathbf{F}_i^{t},\qquad \mathbf{x}_i^{t+1} = \mathrm{wrap}\!\left(\mathbf{x}_i^{t} + \Delta t\,\mathbf{v}_i^{t+1}\right)
-\tag{5}
+\mathbf{v}_i^{t+1} = D\,\mathbf{v}_i^{t} + \frac{\Delta t}{m}\,\mathbf{F}_i^{t},\qquad \mathbf{x}_i^{t+1} = \mathrm{wrap}\left(\mathbf{x}_i^{t} + \Delta t\,\mathbf{v}_i^{t+1}\right)
 $$
 
 where $\mathrm{wrap}([x,y]) = ([x\bmod L],[y\bmod L])$ maps positions back to $[0,L)$ per component.
@@ -146,11 +148,13 @@ Because $D<1$ and $K$ may be asymmetric, momentum and mechanical energy are **no
 
 ## 6) “Every pair” across five species
 
-Let species indices $a,b\in\{1,\dots,5\}$. For **any** pair $(a,b)$, the pairwise law is the same as (1), parameterized by $k_{ab}$. Concretely:
+Let species indices $a,b\in\\{1,\dots,5\\}$. For **any** pair $(a,b)$, the pairwise law is the same as (1), parameterized by $k_{ab}$. Concretely:
+
+(6)
+
 
 $$
-\mathbf{F}^{(a\leftarrow b)}(r) = k_{ab}\,\max\!\Bigl(0,\,1-\frac{r}{R}\Bigr)\,\hat{\mathbf{r}},\quad \text{for } (a,b)\in\{1,\dots,5\}^2
-\tag{6}
+\mathbf{F}^{(a\leftarrow b)}(r) = k_{ab}\max\Bigl(0,1-\frac{r}{R}\Bigr)\hat{\mathbf{r}},\quad \text{for } (a,b)\in\\{1,\dots,5\\}^2
 $$
 
 That yields 25 interaction channels:
@@ -161,9 +165,9 @@ That yields 25 interaction channels:
 
 ---
 
-## 7) Torus-world principle (why & how)
+## 7) Torus-world principle
 
-* **What it is.** The 2-torus $\mathbb{T}^2$ identifies opposite edges: exiting right re-enters left; top connects to bottom. Mathematically: positions live in $[0,L)^2/\sim$ where $(x,y)\sim(x\!\pm\!L,y)\sim(x,y\!\pm\!L)$.
+* **What it is.** The 2-torus $\mathbb{T}^2$ identifies opposite edges: exiting right re-enters left; top connects to bottom. Mathematically: positions live in $[0,L)^2/\sim$ where $(x,y)\sim(x\pm L,y)\sim(x,y\pm L)$.
 * **Why it’s used.**
 
   1. Removes boundary artifacts (no walls).
