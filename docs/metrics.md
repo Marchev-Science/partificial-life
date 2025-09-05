@@ -23,7 +23,7 @@ $$
 | $\mathbf 1$  | Indicator (1 if the condition holds, 0 otherwise).                                                                                          |
 | $d_{ij}$     | Euclidean distance between particles $i$ and $j$.                                                                                           |
 | $c_i$        | Colour (RGB or HSV vector, or discrete label) of particle $i$.                                                                              |
-| $w(c_i,c_j)$ | **Colour similarity weight**.  Two common choices:<br>• *Hard*: $w=1$ if the colours match a rule (e.g. same label or ΔE < ε), else $0$.<br>• *Soft*: $w=\exp\!\bigl[-\|c_i-c_j\|^2/(2\sigma_c^2)\bigr]$ so near hues still contribute. |
+| $w(c_i,c_j)$ | **Colour similarity weight**.  Two common choices:<br>• *Hard*: $w=1$ if the colours match a rule (e.g. same label or ΔE < ε), else $0$.<br>• *Soft*: $w = \exp\left[-\lVert c_i - c_j \rVert^2/(2\sigma_c^2)\right]$ so near hues still contribute. |
 
 *Interpretation* – Compare $K_\mathrm{col}(r)$ to the theoretical value for a random, colour-independent distribution $K_\text{Poisson}(r)=\pi r^{2}$.
  •  $K_\mathrm{col}(r) > \pi r^{2}$: like-coloured particles form clusters at scale $r$.
