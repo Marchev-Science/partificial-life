@@ -79,11 +79,12 @@ This yields the **toroidal distance** and direction, ensuring interactions “ac
 Let $R>0$ be the **interaction range**. Forces vanish beyond $R$.
 For particle $i$ of species $a$ and particle $j$ of species $b$:
 
+(1)
+
 $$
-\boxed{\;\mathbf{F}_{i\leftarrow j}
-= k_{ab}\,\phi(r_{ij})\,\hat{\mathbf{r}}_{ij},\qquad
-\phi(r) = \max\!\Bigl(0,\,1-\frac{r}{R}\Bigr)\;}
-\tag{1}
+\mathbf{F}_{i \leftarrow j}
+= k_{ab}\,\phi(r_{ij})\,\hat{\mathbf{r}}_{ij}, \qquad
+\phi(r) = \max\bigl(0,1 - \tfrac{r}{R}\bigr)
 $$
 
 * Linear taper to zero at $r=R$ keeps the field short-ranged and Lipschitz.
@@ -93,10 +94,14 @@ $$
 
 Within $r \le R$, (1) is the negative gradient of a piecewise quadratic potential:
 
+(2)
+
+
 $$
-U_{ab}(r) = -k_{ab}\Bigl(r - \frac{r^2}{2R}\Bigr),\quad\mathbf{F}_{i\leftarrow j} = -\frac{dU_{ab}}{dr}\,\hat{\mathbf{r}}_{ij}
-\tag{2}
+U_{ab}(r) = -k_{ab}\left(r - \tfrac{r^2}{2R}\right), \quad
+\mathbf{F}_{i \leftarrow j} = -\frac{dU_{ab}}{dr}\,\hat{\mathbf{r}}_{ij}
 $$
+
 
 Outside range, $U_{ab}$ is constant, so no force.
 
