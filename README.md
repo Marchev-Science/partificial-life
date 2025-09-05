@@ -1,5 +1,5 @@
 # Partificial Life
-## Particle Simulation — 5-Colour · Metrics Dashboard (CVI v2.7)
+## Particle Simulation — 5-Colour · Metrics Dashboard (v2.7)
 
 A zero-dependency, browser-only particle system with live controls, a 5×5 interaction matrix, JSON save/load, a realtime metrics dashboard, and a small JavaScript API you can call from the console or an embedding page.
 
