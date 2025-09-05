@@ -56,3 +56,23 @@ A zero-dependency, browser-only particle system with live controls, a 5×5 inter
   * `Start`, `Stop`, `Reset`, `Randomize`, `SaveCfg`, `LoadCfg`. `Reset` respawns based on current desired counts and clears all chart series.&#x20;
 
 ---
+
+## 📂 Project structure
+
+```
+index.html   # Main simulation app, UI, metrics, and simAPI
+test.html    # API test harness (embeds index.html via <iframe>)
+```
+
+Both files are pure HTML+JS and can be opened directly in a browser.
+
+---
+
+## ✍️ Contributing
+
+PRs that add new metrics, improve the CVI (e.g., make `CVI_WIN` operational), or enhance accessibility are welcome. (This README only documents the current behavior; feel free to extend.)&#x20;
+
+---
+
+## 📜 MIT License
+
