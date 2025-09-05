@@ -116,7 +116,7 @@ $$
 z_k(t) = \frac{M_k(t)-\mu_k}{\sigma_k}\quad\text{or}\quad z_k(t) = \frac{M_k(t)-\min(M_k)}{\max(M_k)-\min(M_k)}
 $$
 
-where $k\in\{1:\!K_{\text{col}},\,2:\!H,\,3:\!\langle v\rangle,\,4:\!R_{\text{change}}\}$.
+where $k\in\{1:K_{\text{col}},2:H,3:\langle v\rangle,4:R_{\text{change}}\}$.
 
 ---
 
@@ -145,9 +145,7 @@ $$
 \sqrt{ \sum_{k=1}^{4} w_k \bigl[\Delta z_k(t)\bigr]^{2}} }
 $$
 
-*Interpretation* –
-\* **0** perfect stability (all four metrics flat);
-\* **↑** a larger number means at least one metric—or several in concert—jumped markedly in that frame.
+*Interpretation:*<br>• **0** perfect stability (all four metrics flat);<br>• **↑** a larger number means at least one metric—or several in concert—jumped markedly in that frame.  
 
 ---
 
