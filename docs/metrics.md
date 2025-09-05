@@ -9,11 +9,12 @@ Listing metrics that practitioners of pattern-formation, complex-systems, and ag
 ### Generalised Ripley $K_\mathrm{col}(r)$
 
 $$
-K_\mathrm{col}(r) = \frac{A}{N^{2}} 
-      \sum_{i\neq j}
-       w\!\bigl(c_i, c_j\bigr)\,
-      \mathbf 1\!\bigl[d_{ij}<r\bigr]
+K_{\mathrm{col}}(r) = \frac{A}{N^{2}} 
+      \sum_{i \ne j}
+      w(c_i, c_j)\,
+      \mathbf{1}[d_{ij} < r]
 $$
+
 
 | Symbol       | Meaning                                                                                                                                                                                                                                 |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
