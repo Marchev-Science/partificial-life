@@ -56,10 +56,17 @@ $$
 Then
 
 $$
-\mathbf{r}_{ij} = \begin{bmatrix}\Delta x\\ \Delta y\end{bmatrix},\quad
-r_{ij} = \|\mathbf{r}_{ij}\|_2,\quad
-\hat{\mathbf{r}}_{ij} = \mathbf{r}_{ij}/(r_{ij}+\varepsilon),
+\mathbf{r}_{ij} =
+\left[\begin{array}{c}
+\Delta x \\
+\Delta y
+\end{array}\right],
+\quad
+r_{ij} = \lVert \mathbf{r}_{ij} \rVert_2,
+\quad
+\hat{\mathbf{r}}_{ij} = \mathbf{r}_{ij}/(r_{ij}+\varepsilon)
 $$
+
 
 with a tiny $\varepsilon$ to avoid division by zero.
 
