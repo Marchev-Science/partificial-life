@@ -1,0 +1,81 @@
+{
+  "COLORS": [
+    {
+      "name": "Red",
+      "key": "red",
+      "h": "#f33"
+    },
+    {
+      "name": "Green",
+      "key": "green",
+      "h": "#3f3"
+    },
+    {
+      "name": "Blue",
+      "key": "blue",
+      "h": "#39f"
+    },
+    {
+      "name": "Yellow",
+      "key": "yellow",
+      "h": "#ff3"
+    },
+    {
+      "name": "Pink",
+      "key": "pink",
+      "h": "#f6c"
+    }
+  ],
+  "INITIAL_COUNT": 100,
+  "MAX_COUNT": 300,
+  "CVI_WIN": 40,
+  "CANVAS_SIZE": 1000,
+  "RADIUS": 3,
+  "MIN_DIST_FACTOR": 2,
+  "INTERACTION_RANGE_INIT": 30,
+  "INTERACTION_RANGE_MIN": 5,
+  "INTERACTION_RANGE_MAX": 200,
+  "SPEED": 0.05,
+  "DAMP": 0.95,
+  "ENTROPY_K": 3,
+  "METRICS_HISTORY_LENGTH": 300,
+  "CHART_UPDATE_INTERVAL": 500,
+  "AUTO_START": false,
+  "INTERACTIONS": [
+    [
+      0,
+      0.7,
+      -0.8,
+      0,
+      -0.6
+    ],
+    [
+      -0.9,
+      0.9,
+      -0.3,
+      0.6,
+      -0.3
+    ],
+    [
+      1,
+      -0.9,
+      -0.5,
+      -0.4,
+      0.4
+    ],
+    [
+      -0.8,
+      -0.9,
+      -0.9,
+      -0.2,
+      -0.9
+    ],
+    [
+      0.6,
+      0.1,
+      -0.6,
+      0.1,
+      -0.8
+    ]
+  ]
+}
