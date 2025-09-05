@@ -1,4 +1,4 @@
-# partificial-life  
+# Partificial life metrics  
 
 Listing metrics that practitioners of pattern-formation, complex-systems, and agent-based modelling commonly use. Below are concise, implementation-ready definitions of the **five metrics** you asked to keep, adjusted to match your simulation’s specifics (continuous screen, multicolour particles).  No code—just the mathematics, what each term means, and practical notes.
 
@@ -9,19 +9,19 @@ Listing metrics that practitioners of pattern-formation, complex-systems, and ag
 ### Generalised Ripley $K_\mathrm{col}(r)$
 
 $$
-K_\mathrm{col}(r)\;=\;\frac{A}{N^{2}}\;
+K_\mathrm{col}(r) = \frac{A}{N^{2}} 
       \sum_{i\neq j}
-      \;w\!\bigl(c_i, c_j\bigr)\,
+       w\!\bigl(c_i, c_j\bigr)\,
       \mathbf 1\!\bigl[d_{ij}<r\bigr]
 $$
 
 | Symbol       | Meaning                                                                                                                                                                                                                                 |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| $A$          | 2-D area of the visible domain.                                                                                                                                                                                                         |
-| $N$          | Number of particles in the snapshot.                                                                                                                                                                                                    |
-| $\mathbf 1$  | Indicator (1 if the condition holds, 0 otherwise).                                                                                                                                                                                      |
-| $d_{ij}$     | Euclidean distance between particles $i$ and $j$.                                                                                                                                                                                       |
-| $c_i$        | Colour (RGB or HSV vector, or discrete label) of particle $i$.                                                                                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| $A$          | 2-D area of the visible domain.                                                                                                             |
+| $N$          | Number of particles in the snapshot.                                                                                                        |
+| $\mathbf 1$  | Indicator (1 if the condition holds, 0 otherwise).                                                                                          |
+| $d_{ij}$     | Euclidean distance between particles $i$ and $j$.                                                                                           |
+| $c_i$        | Colour (RGB or HSV vector, or discrete label) of particle $i$.                                                                              |
 | $w(c_i,c_j)$ | **Colour similarity weight**.  Two common choices:<br>• *Hard*: $w=1$ if the colours match a rule (e.g. same label or ΔE < ε), else $0$.<br>• *Soft*: $w=\exp\!\bigl[-\|c_i-c_j\|^2/(2\sigma_c^2)\bigr]$ so near hues still contribute. |
 
 *Interpretation* – Compare $K_\mathrm{col}(r)$ to the theoretical value for a random, colour-independent distribution $K_\text{Poisson}(r)=\pi r^{2}$.
@@ -39,10 +39,7 @@ $$
 For a point cloud in 2-D, differential entropy $H$:
 
 $$
-H\;\approx\;
-\psi(N)\;-\;\psi(k)\;+\;\ln c_2
-\;+\;\frac{2}{N}\sum_{i=1}^{N}\ln\varepsilon_i
-\quad\text{with}\quad c_2=\pi
+H \approx \psi(N) - \psi(k) + \ln c_2 + \frac{2}{N}\sum_{i=1}^{N}\ln\varepsilon_i \quad\text{with}\quad c_2=\pi
 $$
 
 | Term              | Meaning                                                                      |
@@ -62,9 +59,9 @@ $$
 ### Average particle speed
 
 $$
-\langle v\rangle(t)\;=\;\frac{1}{N\,\Delta t}
+\langle v\rangle(t) = \frac{1}{N\,\Delta t}
 \sum_{i=1}^{N}
-\bigl\|\mathbf x_i(t+\Delta t)\;-\;\mathbf x_i(t)\bigr\|
+\bigl\|\mathbf x_i(t+\Delta t) - \mathbf x_i(t)\bigr\|
 $$
 
 *Use* – Tracks how “busy” the system is.  Plot alongside clustering to spot phases where motion slows but structure still coarsens, or vice-versa.
@@ -80,7 +77,7 @@ $$
 3. Define the change metric
 
 $$
-R_\text{change}(t)\;=\;1-{SSIM}\bigl(I(t),I(t+\Delta t)\bigr)\quad\in[0,2]
+R_\text{change}(t) = 1-{SSIM}\bigl(I(t),I(t+\Delta t)\bigr)\quad\in[0,2]
 $$
 
 *Interpretation* –
@@ -115,8 +112,7 @@ Tracking all four gives a dashboard that separates spatial order, heterogeneity,
 Convert every raw series to a comparable scale:
 
 $$
-z_k(t)\;=\;\frac{M_k(t)-\mu_k}{\sigma_k}\quad\text{or}\quad
-z_k(t)\;=\;\frac{M_k(t)-\min(M_k)}{\max(M_k)-\min(M_k)}
+z_k(t) = \frac{M_k(t)-\mu_k}{\sigma_k}\quad\text{or}\quad z_k(t) = \frac{M_k(t)-\min(M_k)}{\max(M_k)-\min(M_k)}
 $$
 
 where $k\in\{1:\!K_{\text{col}},\,2:\!H,\,3:\!\langle v\rangle,\,4:\!R_{\text{change}}\}$.
@@ -143,9 +139,9 @@ Choose non‑negative weights $w_k$ that sum to 1 (default $w_k=\tfrac14$).
 Define
 
 $$
-\boxed{\;
-\text{CVI}(t)\;=\;
-\sqrt{\;\sum_{k=1}^{4} w_k \bigl[\Delta z_k(t)\bigr]^{2}}\;}
+\boxed{ 
+\text{CVI}(t) = 
+\sqrt{ \sum_{k=1}^{4} w_k \bigl[\Delta z_k(t)\bigr]^{2}} }
 $$
 
 *Interpretation* –
@@ -159,7 +155,7 @@ $$
 To judge steadiness over a span $T_w$ frames, take the running root‑mean‑square:
 
 $$
-\sigma_{\text{CVI}}(t)\;=\;
+\sigma_{\text{CVI}}(t) = 
 \sqrt{\frac{1}{T_w}\sum_{\tau=t-T_w+1}^{t}\bigl[\text{CVI}(\tau)\bigr]^{2}}
 $$
 
