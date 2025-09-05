@@ -74,7 +74,7 @@ $$
 ### SSIM-based frame difference
 
 1. Render each frame to a luminance image $I(t)$ (e.g. ITU-R BT.601 $Y=0.299R+0.587G+0.114B$).
-2. Compute the Structural Similarity Index ${SSIM}\bigl(I(t),\,I(t+\Delta t)\bigr)\in[-1,1]$.
+2. Compute the Structural Similarity Index ${SSIM}\bigl(I(t),I(t+\Delta t)\bigr)\in[-1,1]$.
 3. Define the change metric
 
 $$
