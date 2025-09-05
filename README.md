@@ -40,7 +40,7 @@ A zero-dependency, browser-only particle system with live controls, a 5×5 inter
 
 > Note: `CVI_WIN` exists in the default config but is not currently used in the calculation loop (reserved for potential rolling-window CVI).&#x20;
 
-(More on metrics...)[metrics.md]
+[More on metrics...](metrics.md)
 ---
 
 ## 🧰 UI & Controls
@@ -59,9 +59,9 @@ A zero-dependency, browser-only particle system with live controls, a 5×5 inter
 ---
 
 ## Additional documentation:  
-* (Working with configurations)[configs.md]
-* (Working with the API)[api.md]
-* (Detailed methododology on metrics)[metrics.md]
+* [Working with configurations](configs.md)
+* [Working with the API](api.md)
+* [Detailed methododology on metrics](metrics.md)
 
 ---
 
