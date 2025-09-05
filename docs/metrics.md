@@ -62,7 +62,7 @@ $$
 $$
 \langle v\rangle(t) = \frac{1}{N\,\Delta t}
 \sum_{i=1}^{N}
-\bigl\|\mathbf x_i(t+\Delta t) - \mathbf x_i(t)\bigr\|
+\lVert\mathbf x_i(t+\Delta t) - \mathbf x_i(t)\rVert
 $$
 
 *Use* – Tracks how “busy” the system is.  Plot alongside clustering to spot phases where motion slows but structure still coarsens, or vice-versa.
