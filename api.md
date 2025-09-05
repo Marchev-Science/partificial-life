@@ -1,6 +1,6 @@
 ## 🧪 API
 
-The simulation exposes a small API on `window.simAPI` once `index.html` finishes initialising. You can call it from the browser console or from a parent page (see `test.html`).&#x20;
+The simulation exposes a small API on `window.simAPI` once `index.html` finishes initialising. You can call it from the browser console or from a parent page (see `test.html`).
 
 ### Surface
 
@@ -24,9 +24,9 @@ simAPI.getMetrics() // { cluster, entropy, speed, change, cvi, step }
 simAPI.waitUntil(predicateFn, { timeoutMs=60000, checkInterval=250 })
 ```
 
-* `loadConfig` accepts an object with any of the config keys listed above. It updates sliders/matrix UI and can auto-start if `AUTO_START` is true.&#x20;
-* `exportConfig` returns the *current* in-app state (range, matrix, equalized `INITIAL_COUNT`).&#x20;
-* `waitUntil` resolves once your predicate sees desired metric conditions; it times out (rejects) by default after 60s.&#x20;
+* `loadConfig` accepts an object with any of the config keys listed above. It updates sliders/matrix UI and can auto-start if `AUTO_START` is true.
+* `exportConfig` returns the *current* in-app state (range, matrix, equalized `INITIAL_COUNT`).
+* `waitUntil` resolves once your predicate sees desired metric conditions; it times out (rejects) by default after 60s.
 
 ### Debug helpers
 
@@ -40,7 +40,7 @@ simAPI.debug.watchEvents()      // wrap API methods with counters/logs
 simAPI.debug.testAPI()          // runs a mini test sequence
 ```
 
-These utilities only print when enabled (`debug.enabled`). The test suite exercises config load, reset, start/stop, waitUntil, and export.&#x20;
+These utilities only print when enabled (`debug.enabled`). The test suite exercises config load, reset, start/stop, waitUntil, and export.
 
 ### Example: programmatic scenario
 
@@ -72,12 +72,12 @@ const cfg = simAPI.exportConfig();
 console.log(cfg);
 ```
 
-The same pattern is used by the included test harness.&#x20;
+The same pattern is used by the included test harness.
 
 ---
 
 ## 🧪 Test harness (`test.html`)
 
-Open `test.html` to drive the sim from a parent page: it iframes `index.html`, waits for `simAPI`, and exposes buttons: **Check API**, **Run All Tests**, **Test Config**, **Test Lifecycle**, **Test Metrics**, **Enable/Disable Debug**, **Clear Log**. Status messages stream into a monospace log panel with time stamps.&#x20;
+Open `test.html` to drive the sim from a parent page: it iframes `index.html`, waits for `simAPI`, and exposes buttons: **Check API**, **Run All Tests**, **Test Config**, **Test Lifecycle**, **Test Metrics**, **Enable/Disable Debug**, **Clear Log**. Status messages stream into a monospace log panel with time stamps.
 
 ---
