@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Particle Simulation — 5‑Colour · Metrics Dashboard (CVI v2.7)</title>
+  <style>
+    :root { --panel-w: 540px; --metrics-w: 340px }
+    *{box-sizing:border-box;margin:0;padding:0}
+    /* ---------------------------------- Layout ------------------------- */
+    body{
+      display:grid;
+      grid-template-columns:var(--panel-w) auto var(--metrics-w); /* controls | sim | metrics */
+      height:100vh;
+      background:#111;
+      color:#eee;
+      font-family:system-ui,sans-serif;
+    }
+    #sidebar{grid-column:1;background:#222;min-width:var(--panel-w);padding:1rem;overflow-y:auto}
+    #sim{grid-column:2;background:#000;width:1000px;height:1000px;max-width:100%;max-height:100%;align-self:center;justify-self:center}
+    #metrics{grid-column:3;background:#1a1a1a;min-width:var(--metrics-w);padding:1rem;overflow-y:auto}
+    /* ---------------------------------- UI widgets -------------------- */
+    h2{font-size:1.25rem;text-align:center;margin-bottom:1rem}
+    #slider-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.25rem}
+    .control label{display:flex;justify-content:space-between;margin-bottom:.25rem}
+    input[type=range]{width:100%}
+    .btn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.25rem}
+    button{width:100%;padding:.5rem 1rem;border:0;border-radius:4px;background:#444;color:#eee;font-size:1rem;cursor:pointer;transition:background .2s}
+    button:hover{background:#666}
+    .value{font-weight:bold;margin-left:.25rem}
+    .matrix{display:grid;grid-template-columns:auto repeat(5,auto);gap:.5rem;align-items:center;margin-bottom:1.5rem}
+    .matrix .header,.matrix .row-label{font-weight:bold;text-align:center}
+    .knob-cell{display:flex;flex-direction:column;align-items:center;gap:.25rem}
+    .chart{background:#000;border:1px solid #333;margin-bottom:1rem}
+    .chart-title{text-align:center;font-size:.9rem;margin-bottom:.25rem}
+    
+    /* === Number Lock Control === */
+    .number-lock-wrapper {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      user-select: none;
+      width: 60px;
+      border: 1px solid #fff;
+      border-radius: 0.5rem;
+      box-sizing: border-box;
+      padding: 2px 0;
+    }
+    .arrow {
+      width: 56px;
+      height: 16px;
+      background: #333;
+      border: 0;
+      color: #fff;
+      font-size: 0.8rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      padding: 0;
+    }
+    .arrow:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .number-lock {
+      width: 56px;
+      height: 24px;
+      overflow: hidden;
+      border-radius: 0.5rem;
+      background: #222;
+      color: #fff;
+      position: relative;
+      box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
+      touch-action: none;
+      cursor: ns-resize;
+    }
+    .number-lock ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      transition: transform 0.25s ease-out;
+    }
+    .number-lock li {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 24px;
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .number-lock::before,
+    .number-lock::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.25);
+    }
+    .number-lock::before { top: 0; }
+    .number-lock::after  { bottom: 0; }
+  </style>
+</head>
+<body>
+  <!-- ============================= SIDEBAR ============================ -->
+  <aside id="sidebar">
+    <h2>Controls</h2>
+    <div id="slider-grid"></div>
+    <div id="matrix" class="matrix"></div>
+    <div class="btn-grid">
+      <button id="start">Start</button>
+      <button id="stop">Stop</button>
+      <button id="reset">Reset</button>
+      <button id="random">Randomize</button>
+      <button id="saveCfg">SaveCfg</button>
+      <button id="loadCfg">LoadCfg</button>
+    </div>
+    <input id="cfgFile" type="file" accept="application/json" style="display:none">
+  </aside>
+
+  <!-- ============================= SIM CANVAS ======================== -->
+  <canvas id="sim" width="1000" height="1000"></canvas>
+
+  <!-- ============================= METRICS =========================== -->
+  <aside id="metrics">
+    <h2>Metrics</h2>
+    <div class="chart-wrapper"><div class="chart-title">Clustering</div><canvas id="chart-cluster" class="chart" width="300" height="120"></canvas></div>
+    <div class="chart-wrapper"><div class="chart-title">Spatial Entropy</div><canvas id="chart-entropy" class="chart" width="300" height="120"></canvas></div>
+    <div class="chart-wrapper"><div class="chart-title">Mean Speed</div><canvas id="chart-speed" class="chart" width="300" height="120"></canvas></div>
+    <div class="chart-wrapper"><div class="chart-title">Frame Change</div><canvas id="chart-change" class="chart" width="300" height="120"></canvas></div>
+    <div class="chart-wrapper"><div class="chart-title">Composite Volatility Index</div><canvas id="chart-cvi" class="chart" width="300" height="120"></canvas></div>
+  </aside>
+
+<!-- ==================================================================== -->
+<!--                     GLOBAL CONFIGURATION (default)                   -->
+<!-- ==================================================================== -->
+<script>
+const DEFAULT_CONFIG = {
+  /* 1 — Colour taxonomy; also fixes matrix row/col order */
+  COLORS: [
+    { name: 'Red',    key: 'red',   h: '#f33' },
+    { name: 'Green',  key: 'green', h: '#3f3' },
+    { name: 'Blue',   key: 'blue',  h: '#39f' },
+    { name: 'Yellow', key: 'yellow',h: '#ff3' },
+    { name: 'Pink',   key: 'pink',  h: '#f6c' },
+  ],
+  /* 2 — Starting population per colour */
+  INITIAL_COUNT: 100,
+  /* 3 — Upper bound when user adds / removes particles */
+  MAX_COUNT: 300,
+  /* 4 — Rolling‑window length for the Composite Volatility Index */
+  CVI_WIN: 40,
+  /* 5 — World dimensions (toroidal edges) */
+  CANVAS_SIZE: 1000,
+  /* 6 — Particle render radius (pixels) */
+  RADIUS: 3,
+  /* 7 — Minimum centre‑to‑centre separation factor → MIN_DIST = RADIUS × MIN_DIST_FACTOR */
+  MIN_DIST_FACTOR: 2,
+  /* 8 — Initial cut‑off distance for attractive/repulsive forces */
+  INTERACTION_RANGE_INIT: 20,
+  /* 8a — Slider bounds for interaction range */
+  INTERACTION_RANGE_MIN: 5,
+  INTERACTION_RANGE_MAX: 200,
+  /* 9 — Global acceleration scaling */
+  SPEED: 0.05,
+  /* 10 — Per‑step velocity damping */
+  DAMP: 0.95,
+  /* 11 — k‑nearest neighbour parameter for spatial‑entropy estimator */
+  ENTROPY_K: 3,
+  /* 12 — Trim length for every metrics series */
+  METRICS_HISTORY_LENGTH: 3000,
+  /* 13 — Re‑compute metrics & redraw charts every (ms) */
+  CHART_UPDATE_INTERVAL: 1000,
+  /* 17 — Auto‑start simulation flag */
+  AUTO_START: false,
+  /* 15 — 5×5 interaction‑strength matrix (Red,Green,Blue,Yellow,Pink) */
+  INTERACTIONS: Array.from({length:5},()=>Array(5).fill(0)),
+};
+
+/* Merge stored preset (if any) */
+const CONFIG = (()=>{
+  try{
+    const s=localStorage.getItem('simConfig');
+    return s?{...DEFAULT_CONFIG,...JSON.parse(s)}:DEFAULT_CONFIG;
+  }catch{ return DEFAULT_CONFIG; }
+})();
+</script>
+
+<!-- ==================================================================== -->
+<!--                        MAIN SIMULATION SCRIPT                         -->
+<!-- ==================================================================== -->
+<script>
+window.addEventListener('DOMContentLoaded',()=>{
+  /* -------------------- bind CONFIG → local constants ----------------- */
+  const COLORS  = CONFIG.COLORS;
+  const INIT_CT = CONFIG.INITIAL_COUNT;
+  const MAX_CT  = CONFIG.MAX_COUNT;
+  const R       = CONFIG.RADIUS;
+  const MIN_DIST= R*CONFIG.MIN_DIST_FACTOR;
+  const SPEED   = CONFIG.SPEED;
+  const DAMP    = CONFIG.DAMP;
+  const MET_HIST= CONFIG.METRICS_HISTORY_LENGTH;
+  const ENT_K   = CONFIG.ENTROPY_K;
+  const CHART_INTERVAL = CONFIG.CHART_UPDATE_INTERVAL;
+  const CVI_WIN = CONFIG.CVI_WIN;
+
+  /* -------------------- DOM references ------------------------------- */
+  const $=id=>document.getElementById(id);
+  const cvs=$('sim'), ctx=cvs.getContext('2d');
+  cvs.width=cvs.height=CONFIG.CANVAS_SIZE;
+  const W=cvs.width, H=cvs.height;
+
+  /* -------------------- UI construction ------------------------------ */
+  const sliderGrid=$('slider-grid');
+  sliderGrid.innerHTML=`<div class="control"><label>Range (<span id="rangeVal" class="value">${CONFIG.INTERACTION_RANGE_INIT}</span>)</label><input id="rangeSlider" type="range" min="${CONFIG.INTERACTION_RANGE_MIN}" max="${CONFIG.INTERACTION_RANGE_MAX}" value="${CONFIG.INTERACTION_RANGE_INIT}"></div>`;
+
+  const desiredCounts={};
+  COLORS.forEach(c=>{
+    desiredCounts[c.key]=INIT_CT;
+    sliderGrid.insertAdjacentHTML('beforeend',`<div class="control"><label>${c.name} (<span id="${c.key}Val" class="value">${INIT_CT}</span>)</label><input id="${c.key}Slider" type="range" min="0" max="${MAX_CT}" value="${INIT_CT}"></div>`);
+  });
+
+  /* Matrix UI */
+  const matrix=$('matrix');
+  matrix.innerHTML='<div></div>'+COLORS.map(c=>`<div class="header">${c.name}</div>`).join('');
+  COLORS.forEach(r=>{
+    matrix.insertAdjacentHTML('beforeend',`<div class="row-label">${r.name}</div>`);
+    COLORS.forEach(c=>{
+      const k=`${r.key[0]}2${c.key[0]}`;
+      matrix.insertAdjacentHTML('beforeend',`<div class="knob-cell" id="cell-${k}"></div>`);
+    });
+  });
+
+  /* -------------------- particle system ------------------------------ */
+  class Particle{constructor(x,y,c){this.x=x;this.y=y;this.vx=this.vy=0;this.c=c;}}
+  const parts=[];
+  const strengths={};
+  COLORS.forEach((r,ri)=>COLORS.forEach((c,ci)=>strengths[`${r.key[0]}2${c.key[0]}`]=CONFIG.INTERACTIONS[ri][ci]));
+  const numberLocks={};
+
+  /* -------------------- helpers -------------------------------------- */
+  const dT=(a,b,s)=>{let d=b-a;if(d>s/2)d-=s;if(d<-s/2)d+=s;return d;};
+  const spawn=color=>{for(let t=0;t<400;t++){const x=Math.random()*W,y=Math.random()*H;if(parts.every(p=>Math.hypot(dT(x,p.x,W),dT(y,p.y,H))>=MIN_DIST))return new Particle(x,y,color);}return new Particle(Math.random()*W*Math.random()*H,color);} ;
+  const cnt=c=>parts.filter(p=>p.c===c).length;
+  const adjustCount=key=>{
+    const diff=desiredCounts[key]-cnt(key);
+    if(diff>0) for(let i=0;i<diff;i++) parts.push(spawn(key));
+    else for(let i=0;i<-diff;i++){const idx=parts.findIndex(p=>p.c===key); if(idx>-1) parts.splice(idx,1);}  };
+  const pairStrength=(p,q)=>strengths[`${p.c[0]}2${q.c[0]}`];
+
+  /* -------------------- metrics & charts ----------------------------- */
+  const series={cluster:[],entropy:[],speed:[],change:[],cvi:[]};
+  let prevPos=null,prevVals=null, chartTimer=null;
+  const push=(k,v)=>{series[k].push(v); if(series[k].length>MET_HIST)series[k].shift();};
+  const psi=n=>Math.log(n)-1/(2*n);
+  function computeMetrics(){
+    if(!parts.length) return;
+    const cur={};
+    /* clustering */
+    let total=0;
+    parts.forEach(p=>{let n=0; parts.forEach(q=>{if(p!==q && p.c===q.c && Math.hypot(dT(p.x,q.x,W),dT(p.y,q.y,H))<20) n++;}); total+=n;});
+    cur.cluster=total/parts.length; push('cluster',cur.cluster);
+
+    /* entropy */
+    let sumLn=0;
+    parts.forEach(p=>{const dists=parts.filter(q=>q!==p).map(q=>Math.hypot(dT(p.x,q.x,W),dT(p.y,q.y,H))).sort((a,b)=>a-b); sumLn+=Math.log(dists[ENT_K-1]||1);});
+    cur.entropy=psi(parts.length)-psi(ENT_K)+Math.log(Math.PI)+2*sumLn/parts.length; push('entropy',cur.entropy);
+
+    /* speed */
+    cur.speed=parts.reduce((s,p)=>s+Math.hypot(p.vx,p.vy),0)/parts.length; push('speed',cur.speed);
+
+    /* frame change */
+    cur.change=0;
+    if(prevPos && prevPos.length===parts.length){
+      let s=0; for(let i=0;i<parts.length;i++) s+=Math.hypot(dT(parts[i].x,prevPos[i].x,W),dT(parts[i].y,prevPos[i].y,H));
+      cur.change=s/parts.length;
+    }
+    push('change',cur.change); prevPos=parts.map(p=>({x:p.x,y:p.y}));
+
+    /* CVI instantaneous */
+    if(prevVals){
+      let sumSq=0;
+      ['cluster','entropy','speed','change'].forEach(key=>{
+        const rng=Math.max(...series[key])-Math.min(...series[key])||1;
+        const dz=(cur[key]-prevVals[key])/rng;
+        sumSq+=dz*dz;
+      });
+      const inst=Math.sqrt(sumSq/4);
+      push('cvi',inst);
+    } else push('cvi',0);
+    prevVals=cur;
+  }
+
+  /* chart drawing */
+  const charts={cluster:$('chart-cluster'),entropy:$('chart-entropy'),speed:$('chart-speed'),change:$('chart-change'),cvi:$('chart-cvi')};
+  const drawChart=(cv,data,color)=>{
+    const g=cv.getContext('2d'); const W=cv.width,H=cv.height;
+    g.clearRect(0,0,W,H);
+    const latest=data[data.length-1]||0;
+    g.fillStyle='#ccc'; g.font='20px monospace'; g.textBaseline='top';
+    g.fillText(latest.toFixed(2),4,4);
+    if(data.length<2) return;
+    const max=Math.max(...data), min=Math.min(...data), rng=max-min||1;
+    g.strokeStyle=color; g.beginPath();
+    data.forEach((v,i)=>{const x=i/(data.length-1)*W, y=H-(v-min)/rng*H; i?g.lineTo(x,y):g.moveTo(x,y);} );
+    g.stroke();
+  };
+  const updateCharts=()=>{
+    drawChart(charts.cluster,series.cluster,'#e74c3c');
+    drawChart(charts.entropy,series.entropy,'#f1c40f');
+    drawChart(charts.speed,series.speed,'#3498db');
+    drawChart(charts.change,series.change,'#9b59b6');
+    drawChart(charts.cvi,series.cvi,'#1abc9c');
+  };
+  const startCharts=()=>{if(chartTimer===null) chartTimer=setInterval(()=>{computeMetrics(); updateCharts();},CHART_INTERVAL);} ;
+  const stopCharts=()=>{clearInterval(chartTimer); chartTimer=null;};
+
+  /* -------------------- physics & rendering --------------------------- */
+  let interactionRange=CONFIG.INTERACTION_RANGE_INIT;
+  const physics=()=>{
+    parts.forEach(p=>{
+      let ax=0,ay=0;
+      parts.forEach(q=>{
+        if(p===q) return;
+        const dx=dT(p.x,q.x,W), dy=dT(p.y,q.y,H), dist=Math.hypot(dx,dy);
+        if(dist && dist<interactionRange){
+          const f=pairStrength(p,q)*(1-dist/interactionRange);
+          ax+=f*dx/dist; ay+=f*dy/dist;
+        }
+      });
+      p.vx=(p.vx+ax*SPEED)*DAMP; p.vy=(p.vy+ay*SPEED)*DAMP;
+    });
+    parts.forEach(p=>{p.x=(p.x+p.vx+W)%W; p.y=(p.y+p.vy+H)%H;});
+
+    /* separation constraint */
+    for(let i=0;i<parts.length;i++){
+      for(let j=i+1;j<parts.length;j++){
+        const p=parts[i], q=parts[j];
+        const dx=dT(p.x,q.x,W), dy=dT(p.y,q.y,H), dist=Math.hypot(dx,dy);
+        if(dist && dist<MIN_DIST){
+          const ov=(MIN_DIST-dist)/2, ux=dx/dist, uy=dy/dist;
+          p.x=(p.x-ux*ov+W)%W; p.y=(p.y-uy*ov+H)%H;
+          q.x=(q.x+ux*ov+W)%W; q.y=(q.y+uy*ov+H)%H;
+        }
+      }
+    }
+  };
+  const render=()=>{ctx.clearRect(0,0,W,H); parts.forEach(p=>{ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(p.x,p.y,R,0,2*Math.PI); ctx.fill();});};
+
+  /* -------------------- main loop ------------------------------------ */
+  let running=CONFIG.AUTO_START;
+  const loop=()=>{if(!running) return; physics(); render(); requestAnimationFrame(loop);} ;
+
+  /* -------------------- Number Lock factory --------------------------------- */
+  const createNumberLock = (cellId, key) => {
+    const cell = $(cellId);
+    
+    // Create the number lock UI structure
+    const wrapper = document.createElement('div');
+    wrapper.className = 'number-lock-wrapper';
+    
+    const upBtn = document.createElement('button');
+    upBtn.className = 'arrow arrow-up';
+    upBtn.setAttribute('aria-label', 'Increase value');
+    upBtn.textContent = '▲';
+    
+    const lockDiv = document.createElement('div');
+    lockDiv.className = 'number-lock';
+    lockDiv.tabIndex = 0;
+    lockDiv.setAttribute('role', 'spinbutton');
+    lockDiv.setAttribute('aria-valuemin', '-1');
+    lockDiv.setAttribute('aria-valuemax', '1');
+    lockDiv.setAttribute('aria-valuenow', '0');
+    lockDiv.setAttribute('aria-valuetext', '0');
+    
+    const wheel = document.createElement('ul');
+    wheel.id = `wheel-${key}`;
+    lockDiv.appendChild(wheel);
+    
+    const downBtn = document.createElement('button');
+    downBtn.className = 'arrow arrow-down';
+    downBtn.setAttribute('aria-label', 'Decrease value');
+    downBtn.textContent = '▼';
+    
+    wrapper.appendChild(upBtn);
+    wrapper.appendChild(lockDiv);
+    wrapper.appendChild(downBtn);
+    
+    cell.appendChild(wrapper);
+    
+    // Define constants and variables
+    const STEP = 0.1;
+    const MIN = -1.0;
+    const MAX = 1.0;
+    const EPS = 1e-9;
+    const values = [];
+    
+    for (let v = MAX; v >= MIN - EPS; v -= STEP) {
+      values.push(Number(v.toFixed(1)));
+    }
+    
+    const ITEM_HEIGHT = 24;
+    
+    // Populate the wheel with values
+    values.forEach(val => {
+      const li = document.createElement('li');
+      li.textContent = val.toFixed(1);
+      wheel.appendChild(li);
+    });
+    
+    // Find the initial index (default to 0.0)
+    let index = values.indexOf(strengths[key] || 0);
+    if (index === -1) index = values.indexOf(0); // Fallback if value not found
+    
+    const clamp = (i) => Math.min(Math.max(i, 0), values.length - 1);
+    
+    // Update UI position and value
+    function updatePosition(animate = true) {
+      if (!animate) wheel.style.transition = "none";
+      wheel.style.transform = `translateY(${-index * ITEM_HEIGHT}px)`;
+      if (!animate) wheel.offsetHeight;
+      wheel.style.transition = animate ? "transform 0.25s ease-out" : "none";
+      
+      const val = values[index];
+      lockDiv.setAttribute("aria-valuenow", val);
+      lockDiv.setAttribute("aria-valuetext", val);
+      upBtn.disabled = index === 0;
+      downBtn.disabled = index === values.length - 1;
+      
+      // Update the actual strength value
+      strengths[key] = val;
+    }
+    
+    // Initial position
+    updatePosition(false);
+    
+    // Add event listeners
+    upBtn.addEventListener("click", () => {
+      if (index > 0) {
+        index = clamp(index - 1);
+        updatePosition();
+      }
+    });
+    
+    downBtn.addEventListener("click", () => {
+      if (index < values.length - 1) {
+        index = clamp(index + 1);
+        updatePosition();
+      }
+    });
+    
+    // Mouse wheel
+    lockDiv.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const direction = Math.sign(e.deltaY);
+      if (direction === 0) return;
+      index = clamp(index + direction);
+      updatePosition();
+    }, { passive: false });
+    
+    // Touch swipe
+    let startY = null;
+    lockDiv.addEventListener("touchstart", (e) => {
+      if (e.touches.length !== 1) return;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+    
+    lockDiv.addEventListener("touchmove", (e) => {
+      if (startY === null) return;
+      const currentY = e.touches[0].clientY;
+      const dy = currentY - startY;
+      if (Math.abs(dy) >= 15) {
+        const direction = dy > 0 ? 1 : -1;
+        index = clamp(index + direction);
+        startY = currentY;
+        updatePosition();
+      }
+      e.preventDefault();
+    }, { passive: false });
+    
+    lockDiv.addEventListener("touchend", () => {
+      startY = null;
+    });
+    
+    // Keyboard
+    lockDiv.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") {
+        index = clamp(index - 1);
+        updatePosition();
+      } else if (e.key === "ArrowDown") {
+        index = clamp(index + 1);
+        updatePosition();
+      }
+    });
+    
+    // Return interface for external updates
+    return {
+      setValue: (v) => {
+        const newIndex = values.indexOf(Number(parseFloat(v).toFixed(1)));
+        if (newIndex !== -1) {
+          index = newIndex;
+          updatePosition();
+        }
+      }
+    };
+  };
+
+  // Create number locks for each interaction
+  COLORS.forEach(r => {
+    COLORS.forEach(c => {
+      const k = `${r.key[0]}2${c.key[0]}`;
+      numberLocks[k] = createNumberLock(`cell-${k}`, k);
+    });
+  });
+
+  /* -------------------- UI events ------------------------------------ */
+  $('rangeSlider').addEventListener('input',e=>{interactionRange=+e.target.value; $('rangeVal').textContent=e.target.value;});
+  COLORS.forEach(c=>$(`${c.key}Slider`).addEventListener('input',e=>{desiredCounts[c.key]=+e.target.value; $(`${c.key}Val`).textContent=e.target.value; adjustCount(c.key);}));
+
+  /* buttons */
+  $('start').addEventListener('click',()=>{if(!running){running=true; loop(); startCharts();}});
+  $('stop' ).addEventListener('click',()=>{running=false; stopCharts();});
+  $('random').addEventListener('click',()=>{
+    COLORS.forEach(r=>COLORS.forEach(c=>{
+      const k=`${r.key[0]}2${c.key[0]}`;
+      const v=(Math.random()*2-1).toFixed(1);
+      strengths[k]=+v;
+      numberLocks[k].setValue(v);
+    }));
+  });
+  $('reset').addEventListener('click',()=>{
+    /* keep params, just respawn particles */
+    running=false; stopCharts(); parts.length=0; prevPos=null; prevVals=null;
+    
+    /* reset chart data */
+    Object.keys(series).forEach(key => series[key] = []);
+    updateCharts(); /* redraw empty charts */
+    
+    COLORS.forEach(c=>{for(let i=0;i<desiredCounts[c.key];i++) parts.push(spawn(c.key));});
+    render(); /* immediate visual update */
+  });
+
+  /* save / load */
+  const buildCurrentConfig=()=>{
+    const cfg={...CONFIG};
+    cfg.INTERACTION_RANGE_INIT=interactionRange;
+    cfg.INTERACTIONS=COLORS.map(r=>COLORS.map(c=>strengths[`${r.key[0]}2${c.key[0]}`]));
+    cfg.INITIAL_COUNT=desiredCounts[COLORS[0].key]; // assume all equal for save convenience
+    return cfg;
+  };
+  $('saveCfg').addEventListener('click',()=>{
+    const cfg=buildCurrentConfig();
+    const blob=new Blob([JSON.stringify(cfg,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='sim-config.json'; a.click(); URL.revokeObjectURL(a.href);
+    localStorage.setItem('simConfig',JSON.stringify(cfg));
+  });
+  $('loadCfg').addEventListener('click',()=>$('cfgFile').click());
+  $('cfgFile').addEventListener('change',e=>{
+    const f=e.target.files[0]; 
+    if(!f) return; 
+    const fr=new FileReader(); 
+    fr.onload=ev=>{
+      try{
+        const loadedConfig = JSON.parse(ev.target.result);
+        
+        // Update strength values in the UI
+        if (loadedConfig.INTERACTIONS) {
+          COLORS.forEach((r, ri) => {
+            COLORS.forEach((c, ci) => {
+              const k = `${r.key[0]}2${c.key[0]}`;
+              if (loadedConfig.INTERACTIONS[ri] && loadedConfig.INTERACTIONS[ri][ci] !== undefined) {
+                const value = loadedConfig.INTERACTIONS[ri][ci];
+                strengths[k] = value;
+                numberLocks[k].setValue(value);
+              }
+            });
+          });
+        }
+        
+        localStorage.setItem('simConfig', ev.target.result);
+        location.reload();
+      } catch {
+        alert('Invalid config');
+      }
+    }; 
+    fr.readAsText(f);
+  });
+
+  /* -------------------- initialise system ---------------------------- */
+  COLORS.forEach(c=>{for(let i=0;i<INIT_CT;i++) parts.push(spawn(c.key));});
+  render(); if(running){loop(); startCharts();}
+});
+</script>
+</body>
+</html>

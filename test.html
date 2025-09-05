@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Particle Sim API Test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #111; color: #eee; padding: 2rem; }
+    #controls { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    button { padding: 0.5rem 1rem; background: #444; color: #eee; border: none; border-radius: 4px; cursor: pointer; min-width: 120px; }
+    button:hover { background: #666; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #log { background: #000; border: 1px solid #333; padding: 1rem; height: 300px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; }
+    .success { color: #4caf50; }
+    .error { color: #f44336; }
+    .info { color: #2196f3; }
+    .warning { color: #ff9800; }
+    h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    .sim-container { margin: 1rem 0; border: 1px solid #333; }
+    iframe { width: 100%; height: 500px; border: none; }
+  </style>
+</head>
+<body>
+  <h1>Particle Simulation API Test</h1>
+  
+  <div class="sim-container">
+    <iframe id="sim-frame" src="index.html"></iframe>
+  </div>
+  
+  <div id="controls">
+    <button id="btn-api-check" disabled>Check API</button>
+    <button id="btn-run-tests" disabled>Run All Tests</button>
+    <button id="btn-test-config" disabled>Test Config</button>
+    <button id="btn-test-lifecycle" disabled>Test Lifecycle</button>
+    <button id="btn-test-metrics" disabled>Test Metrics</button>
+    <button id="btn-debug-enable" disabled>Enable Debug</button>
+    <button id="btn-debug-disable" disabled>Disable Debug</button>
+    <button id="btn-clear-log">Clear Log</button>
+  </div>
+  
+  <h3>Test Log:</h3>
+  <div id="log"></div>
+  
+  <script>
+    // Log utility
+    const log = (message, className) => {
+      const logEl = document.getElementById('log');
+      const timestamp = new Date().toISOString().substring(11, 23);
+      const entry = document.createElement('div');
+      if (className) entry.className = className;
+      entry.textContent = `[${timestamp}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    };
+    
+    // Wait for iframe to load
+    document.getElementById('sim-frame').addEventListener('load', () => {
+      log('Simulation iframe loaded', 'info');
+      
+      // Get access to the simAPI
+      const simFrame = document.getElementById('sim-frame');
+      const sim = simFrame.contentWindow;
+      
+      // Wait for simAPI to be available
+      const checkSimAPI = () => {
+        try {
+          if (sim.simAPI) {
+            log(`simAPI v${sim.simAPI.version} is available`, 'success');
+            enableButtons();
+            return true;
+          } else {
+            log('simAPI not found, retrying in 1 second...', 'warning');
+            setTimeout(checkSimAPI, 1000);
+            return false;
+          }
+        } catch (error) {
+          log(`Error checking simAPI: ${error.message}`, 'error');
+          setTimeout(checkSimAPI, 1000);
+          return false;
+        }
+      };
+      
+      // First check after a delay to allow initialization
+      setTimeout(checkSimAPI, 1000);
+      
+      // Enable buttons once API is available
+      const enableButtons = () => {
+        document.querySelectorAll('button').forEach(btn => {
+          btn.disabled = false;
+        });
+      };
+      
+      // Test functions
+      const tests = {
+        checkAPI: async () => {
+          log('Checking API methods...', 'info');
+          
+          // Check API structure
+          const api = sim.simAPI;
+          const methods = ['loadConfig', 'exportConfig', 'start', 'stop', 'reset', 'getMetrics', 'waitUntil'];
+          const missing = methods.filter(m => typeof api[m] !== 'function');
+          
+          if (missing.length) {
+            log(`Missing API methods: ${missing.join(', ')}`, 'error');
+            return false;
+          } else {
+            log(`All required API methods present: ${methods.join(', ')}`, 'success');
+          }
+          
+          // Check debug utilities
+          if (api.debug) {
+            log('Debug utilities available', 'success');
+          } else {
+            log('Debug utilities not found', 'warning');
+          }
+          
+          return true;
+        },
+        
+        config: async () => {
+          log('Testing configuration functions...', 'info');
+          
+          // Test load config
+          const testConfig = {
+            INTERACTION_RANGE_INIT: 25,
+            INTERACTIONS: [
+              [0.5, -0.2, 0.0, 0.1, -0.3],
+              [-0.2, 0.5, -0.1, 0.0, 0.2],
+              [0.0, -0.1, 0.5, -0.2, 0.0],
+              [0.1, 0.0, -0.2, 0.5, -0.1],
+              [-0.3, 0.2, 0.0, -0.1, 0.5]
+            ]
+          };
+          
+          sim.simAPI.loadConfig(testConfig);
+          log('Config loaded', 'success');
+          
+          // Test export config
+          const exported = sim.simAPI.exportConfig();
+          log(`Config exported: interaction range = ${exported.INTERACTION_RANGE_INIT}`, 'success');
+          log(`Matrix first value: ${exported.INTERACTIONS[0][0]}`, 'info');
+          
+          return true;
+        },
+        
+        lifecycle: async () => {
+          log('Testing lifecycle functions...', 'info');
+          
+          // Reset
+          sim.simAPI.reset();
+          log('Reset called', 'success');
+          
+          // Start
+          sim.simAPI.start();
+          log('Simulation started', 'success');
+          
+          // Wait 2 seconds
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Stop
+          sim.simAPI.stop();
+          log('Simulation stopped', 'success');
+          
+          return true;
+        },
+        
+        metrics: async () => {
+          log('Testing metrics functions...', 'info');
+          
+          // Start if not running
+          sim.simAPI.start();
+          
+          // Get initial metrics
+          const initial = sim.simAPI.getMetrics();
+          log(`Initial metrics: step=${initial.step}, cvi=${initial.cvi?.toFixed(3) || 'N/A'}`, 'success');
+          
+          // Test waitUntil
+          log('Testing waitUntil (waiting for 3 more steps)...', 'info');
+          try {
+            const targetStep = initial.step + 3;
+            const result = await sim.simAPI.waitUntil(
+              m => m.step >= targetStep,
+              { timeoutMs: 10000 }
+            );
+            
+            log(`Condition met at step ${result.step}`, 'success');
+            log(`Final metrics: cvi=${result.cvi?.toFixed(3) || 'N/A'}, entropy=${result.entropy?.toFixed(3) || 'N/A'}`, 'info');
+            
+            // Stop simulation
+            sim.simAPI.stop();
+            return true;
+          } catch (err) {
+            log(`Error in waitUntil: ${err.message}`, 'error');
+            sim.simAPI.stop();
+            return false;
+          }
+        },
+        
+        runAll: async () => {
+          log('==== RUNNING ALL TESTS ====', 'info');
+          
+          let success = true;
+          
+          log('1. API Structure Check', 'info');
+          if (await tests.checkAPI()) {
+            log('✓ API structure check passed', 'success');
+          } else {
+            log('✗ API structure check failed', 'error');
+            success = false;
+          }
+          
+          log('\n2. Configuration Tests', 'info');
+          if (await tests.config()) {
+            log('✓ Configuration tests passed', 'success');
+          } else {
+            log('✗ Configuration tests failed', 'error');
+            success = false;
+          }
+          
+          log('\n3. Lifecycle Tests', 'info');
+          if (await tests.lifecycle()) {
+            log('✓ Lifecycle tests passed', 'success');
+          } else {
+            log('✗ Lifecycle tests failed', 'error');
+            success = false;
+          }
+          
+          log('\n4. Metrics Tests', 'info');
+          if (await tests.metrics()) {
+            log('✓ Metrics tests passed', 'success');
+          } else {
+            log('✗ Metrics tests failed', 'error');
+            success = false;
+          }
+          
+          log('\n==== TEST SUMMARY ====', 'info');
+          if (success) {
+            log('All tests passed successfully! 🎉', 'success');
+          } else {
+            log('Some tests failed! Check the log for details.', 'error');
+          }
+          
+          return success;
+        }
+      };
+      
+      // Button event handlers
+      document.getElementById('btn-api-check').addEventListener('click', tests.checkAPI);
+      document.getElementById('btn-run-tests').addEventListener('click', tests.runAll);
+      document.getElementById('btn-test-config').addEventListener('click', tests.config);
+      document.getElementById('btn-test-lifecycle').addEventListener('click', tests.lifecycle);
+      document.getElementById('btn-test-metrics').addEventListener('click', tests.metrics);
+      document.getElementById('btn-debug-enable').addEventListener('click', () => {
+        sim.simAPI.debug.enable();
+        sim.simAPI.debug.watchEvents();
+        log('Debug mode enabled in simulation', 'info');
+      });
+      document.getElementById('btn-debug-disable').addEventListener('click', () => {
+        sim.simAPI.debug.disable();
+        log('Debug mode disabled in simulation', 'info');
+      });
+      document.getElementById('btn-clear-log').addEventListener('click', () => {
+        document.getElementById('log').innerHTML = '';
+      });
+    });
+  </script>
+</body>
+</html>
