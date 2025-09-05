@@ -32,7 +32,7 @@ All series are trimmed to `METRICS_HISTORY_LENGTH` and redrawn every `CHART_UPDA
 
 ## 1) Species & couplings
 
-Let there be five species $\mathcal{S} = \{1,2,3,4,5\}$ (e.g., Red…Pink).
+Let there be five species $\mathcal{S} = \\{ 1, 2, 3, 4, 5 \\}$ (e.g., Red…Pink).  
 Interactions are encoded in a $5\times5$ **coupling matrix** $K = [k_{ab}]$, where $k_{ab} \in [-1,1]$ is the strength exerted **by** species $b$ **on** species $a$.
 
 * $k_{ab} > 0$: attraction of $a$ toward $b$.
