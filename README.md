@@ -40,6 +40,17 @@ A zero-dependency, browser-only particle system with live controls, a 5×5 inter
 
 > Note: `CVI_WIN` exists in the default config but is not currently used in the calculation loop (reserved for potential rolling-window CVI).
 
+
+## 📊 Metrics details
+
+* **Clustering:** average count of same-colour neighbours within 20 px (higher → tighter clusters).
+* **Spatial Entropy:** 2D k-NN estimator with `ENTROPY_K` (default `3`); higher suggests spatial dispersion.
+* **Mean Speed:** average per-particle speed magnitude.
+* **Frame Change:** average per-particle displacement vs previous frame (with torus-aware distance).
+* **CVI:** normalized RMS of the per-metric *deltas* (cluster, entropy, speed, change) → a quick “volatility” gauge.
+
+All series are trimmed to `METRICS_HISTORY_LENGTH` and redrawn every `CHART_UPDATE_INTERVAL` ms.
+
 [More on metrics...](metrics.md)
 
 ---
@@ -56,6 +67,21 @@ A zero-dependency, browser-only particle system with live controls, a 5×5 inter
 * **Buttons**
 
   * `Start`, `Stop`, `Reset`, `Randomize`, `SaveCfg`, `LoadCfg`. `Reset` respawns based on current desired counts and clears all chart series.
+
+---
+
+## 🔌 Embedding tips
+
+* You can embed `index.html` in an `<iframe>` and call `contentWindow.simAPI` from the host (same-origin). This is exactly what `test.html` does.
+* Prefer `simAPI.waitUntil(...)` over arbitrarily timed `setTimeout` when you need metrics-based synchronization.
+
+---
+
+## ⚙️ Troubleshooting
+
+* **“simAPI not found”** (in `test.html`): the harness retries until the iframe initializes; give it a second or click **Check API** again.
+* **Loaded config doesn’t apply fully:** the file loader updates UI controls, stores JSON to `localStorage`, then reloads the page to ensure a clean boot with the merged config.
+* **Charts flatline:** metrics update every `CHART_UPDATE_INTERVAL` and only while **Start** is active. Click **Start** to resume.
 
 ---
 
