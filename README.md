@@ -7,7 +7,7 @@ A zero-dependency, browser-only particle system with live controls, a 5×5 inter
 
 ## Current implementations
 
-For educational and research purposes [https://basaga.org/basaga_files/partificial-life/index.html]  
+For educational and research purposes https://basaga.org/basaga_files/partificial-life/index.html   
 
 ---
 
