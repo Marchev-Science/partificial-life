@@ -40,6 +40,7 @@ A zero-dependency, browser-only particle system with live controls, a 5×5 inter
 
 > Note: `CVI_WIN` exists in the default config but is not currently used in the calculation loop (reserved for potential rolling-window CVI).&#x20;
 
+[metrics.md](More on metrics...)
 ---
 
 ## 🧰 UI & Controls
@@ -54,6 +55,13 @@ A zero-dependency, browser-only particle system with live controls, a 5×5 inter
 * **Buttons**
 
   * `Start`, `Stop`, `Reset`, `Randomize`, `SaveCfg`, `LoadCfg`. `Reset` respawns based on current desired counts and clears all chart series.&#x20;
+
+---
+
+## Additional documentation:  
+* (configs.md)[Working with configurations]
+* (api.md)[Working with the API]
+* (metrics.md)[Detailed methododology on metrics]
 
 ---
 
