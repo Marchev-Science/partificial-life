@@ -5,6 +5,12 @@ A zero-dependency, browser-only particle system with live controls, a 5×5 inter
 
 ---
 
+## Current implementations
+
+For educational and research purposes [https://basaga.org/basaga_files/partificial-life/index.html]  
+
+---
+
 ## ✨ Features
 
 * **Five “species” of particles** (Red, Green, Blue, Yellow, Pink) you can spawn, remove, and color-code.
