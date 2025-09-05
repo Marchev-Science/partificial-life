@@ -45,7 +45,7 @@ $$
 
 | Term              | Meaning                                                                      |
 | ----------------- | ---------------------------------------------------------------------------- |
-| $\psi(\,\cdot\,)$ | Digamma function.                                                            |
+| $\psi(\cdot)$     | Digamma function.                                                            |
 | $k$               | Chosen neighbour order (2–5 is robust).                                      |
 | $\varepsilon_i$   | Distance from particle $i$ to its $k$-th nearest neighbour (exclude itself). |
 
