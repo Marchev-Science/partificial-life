@@ -16,18 +16,18 @@ K_{\mathrm{col}}(r) = \frac{A}{N^{2}}
 $$
 
 
-| Symbol       | Meaning                                                                                                                                                                                                                                 |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| $A$          | 2-D area of the visible domain.                                                                                                             |
-| $N$          | Number of particles in the snapshot.                                                                                                        |
-| $\mathbf 1$  | Indicator (1 if the condition holds, 0 otherwise).                                                                                          |
-| $d_{ij}$     | Euclidean distance between particles $i$ and $j$.                                                                                           |
-| $c_i$        | Colour (RGB or HSV vector, or discrete label) of particle $i$.                                                                              |
+| Symbol       | Meaning                           |
+| ------------ | ----------------------------------- |
+| $A$          | 2-D area of the visible domain.     |
+| $N$          | Number of particles in the snapshot. |
+| $\mathbf 1$  | Indicator (1 if the condition holds, 0 otherwise). |
+| $d_{ij}$     | Euclidean distance between particles $i$ and $j$.  |
+| $c_i$        | Colour (RGB or HSV vector, or discrete label) of particle $i$. |
 | $w(c_i,c_j)$ | **Colour similarity weight**.  Two common choices:<br>• *Hard*: $w=1$ if the colours match a rule (e.g. same label or ΔE < ε), else $0$.<br>• *Soft*: $w = \exp\left[-\lVert c_i - c_j \rVert^2/(2\sigma_c^2)\right]$ so near hues still contribute. |
 
-*Interpretation* – Compare $K_\mathrm{col}(r)$ to the theoretical value for a random, colour-independent distribution $K_\text{Poisson}(r)=\pi r^{2}$.
- •  $K_\mathrm{col}(r) > \pi r^{2}$: like-coloured particles form clusters at scale $r$.
- •  $K_\mathrm{col}(r) < \pi r^{2}$: they repel or mix.
+*Interpretation* – Compare $K_\mathrm{col}(r)$ to the theoretical value for a random, colour-independent distribution $K_\text{Poisson}(r)=\pi r^{2}$.  
+ *  $K_\mathrm{col}(r) > \pi r^{2}$: like-coloured particles form clusters at scale $r$.
+ *  $K_\mathrm{col}(r) < \pi r^{2}$: they repel or mix.
 
 *Practical tips* – Evaluate $r$ over a logarithmic range (e.g. 5–50 px) and plot the normalised ratio $L_\mathrm{col}(r)=\sqrt{K_\mathrm{col}(r)/\pi}-r$ to make deviations from randomness visually flat when there is no clustering.
 
