@@ -60,7 +60,7 @@ $$
 ### Average particle speed
 
 $$
-\langle v\rangle(t) = \frac{1}{N\,\Delta t}
+\langle v\rangle(t) = \frac{1}{N \Delta t}
 \sum_{i=1}^{N}
 \lVert\mathbf x_i(t+\Delta t) - \mathbf x_i(t)\rVert
 $$
