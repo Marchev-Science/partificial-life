@@ -30,7 +30,7 @@ All series are trimmed to `METRICS_HISTORY_LENGTH` and redrawn every `CHART_UPDA
 
 ---
 
-## 1) Species & couplings
+## Species & couplings
 
 Let there be five species $\mathcal{S} = \\{ 1, 2, 3, 4, 5 \\}$ (e.g., Red…Pink).  
 Interactions are encoded in a $5\times5$ **coupling matrix** $K = [k_{ab}]$, where $k_{ab} \in [-1,1]$ is the strength exerted **by** species $b$ **on** species $a$.
@@ -43,38 +43,8 @@ Asymmetry is allowed ($k_{ab} \ne k_{ba}$), which yields **non-reciprocal** inte
 
 ---
 
-## 2) Toroidal displacement (periodic boundaries)
 
-The domain is a square of side $L$ with **periodic boundary conditions** (a flat 2-torus $\mathbb{T}^2$).
-For particles $i$ and $j$ at positions $\mathbf{x}_i, \mathbf{x}_j \in [0,L)^2$, define the **minimal-image** displacement:
-
-$$
-\Delta x = \bigl((x_j - x_i + \tfrac{L}{2}) \bmod L\bigr) - \tfrac{L}{2},\quad
-\Delta y = \bigl((y_j - y_i + \tfrac{L}{2}) \bmod L\bigr) - \tfrac{L}{2}.
-$$
-
-Then
-
-$$
-\mathbf{r}_{ij} =
-\left[\begin{array}{c}
-\Delta x \\
-\Delta y
-\end{array}\right],
-\quad
-r_{ij} = \lVert \mathbf{r}_{ij} \rVert_2,
-\quad
-\hat{\mathbf{r}}_{ij} = \mathbf{r}_{ij}/(r_{ij}+\varepsilon)
-$$
-
-
-with a tiny $\varepsilon$ to avoid division by zero.
-
-This yields the **toroidal distance** and direction, ensuring interactions “across edges” use the shortest wrap-around path.
-
----
-
-## 3) Finite-range pairwise force
+## Finite-range pairwise force
 
 Let $R>0$ be the **interaction range**. Forces vanish beyond $R$.
 For particle $i$ of species $a$ and particle $j$ of species $b$:
@@ -105,7 +75,7 @@ Outside range, $U_{ab}$ is constant, so no force.
 
 ---
 
-## 4) Short-range separation (“hard-core”)
+## Short-range separation (“hard-core”)
 
 To avoid overlap, impose a **minimum centre-to-centre distance** $r_{\min}>0$ (e.g., radius×factor).
 A simple linear penalty adds a repulsive term when $r_{ij} < r_{\min}$:
@@ -120,14 +90,13 @@ with $\gamma>0$ sufficiently large. (Many implementations apply this as an insta
 
 ---
 
-## 5) Total force and time stepping (with damping)
+## Total force and time stepping (with damping)
 
 Let $m$ be particle mass (often set to $1$), $D\in(0,1]$ a **velocity damping** factor, and $\Delta t$ the time step.
 
 Total force on particle $i$ (species $a$):
 
 (4)
-
 
 $$
 \mathbf{F}_i = \sum_{j\ne i}\bigl(\mathbf{F}_{i\leftarrow j} + \mathbf{F}^{\text{sep}}_{i\leftarrow j}\bigr)
@@ -146,7 +115,7 @@ Because $D<1$ and $K$ may be asymmetric, momentum and mechanical energy are **no
 
 ---
 
-## 6) “Every pair” across five species
+## “Every pair” across five species
 
 Let species indices $a,b\in\\{1,\dots,5\\}$. For **any** pair $(a,b)$, the pairwise law is the same as (1), parameterized by $k_{ab}$. Concretely:
 
@@ -167,9 +136,8 @@ That yields 25 interaction channels:
 
 ## 7) Torus-world principle
 
-* **What it is.** The 2-torus $\mathbb{T}^2$ identifies opposite edges: exiting right re-enters left; top connects to bottom. Mathematically: positions live in $[0,L)^2/\sim$ where $(x,y)\sim(x\pm L,y)\sim(x,y\pm L)$.
-* **Why it’s used.**
-
+* **Definition** The 2-torus $\mathbb{T}^2$ identifies opposite edges: exiting right re-enters left; top connects to bottom. Mathematically: positions live in $[0,L)^2/\sim$ where $(x,y)\sim(x\pm L,y)\sim(x,y\pm L)$.
+* **Functionality**
   1. Removes boundary artifacts (no walls).
   2. Preserves mean density.
   3. Keeps the simulation finite while approximating an infinite tiling.
@@ -179,9 +147,36 @@ That yields 25 interaction channels:
   * Integrate positions and then apply the **wrap** map (5).
   * Distances and neighbourhood queries must always use the toroidal metric; Euclidean distance in $[0,L]^2$ without wrapping is incorrect near edges.
 
----
+### Toroidal displacement (periodic boundaries)
 
-## 8) Quick pseudocode (for clarity)
+The domain is a square of side $L$ with **periodic boundary conditions** (a flat 2-torus $\mathbb{T}^2$).
+For particles $i$ and $j$ at positions $\mathbf{x}_i, \mathbf{x}_j \in [0,L)^2$, define the **minimal-image** displacement:
+
+$$
+\Delta x = \bigl((x_j - x_i + \tfrac{L}{2}) \bmod L\bigr) - \tfrac{L}{2},\quad
+\Delta y = \bigl((y_j - y_i + \tfrac{L}{2}) \bmod L\bigr) - \tfrac{L}{2}.
+$$
+
+Then
+
+$$
+\mathbf{r}_{ij} =
+\left[\begin{array}{c}
+\Delta x \\
+\Delta y
+\end{array}\right],
+\quad
+r_{ij} = \lVert \mathbf{r}_{ij} \rVert_2,
+\quad
+\hat{\mathbf{r}}_{ij} = \mathbf{r}_{ij}/(r_{ij}+\varepsilon)
+$$
+
+
+with a tiny $\varepsilon$ to avoid division by zero.
+
+This yields the **toroidal distance** and direction, ensuring interactions “across edges” use the shortest wrap-around path.
+
+### Quick pseudocode (for clarity)
 
 ```js
 for each i:
@@ -215,7 +210,7 @@ for each i:
 
 ---
 
-## 9) Practical notes
+## Practical notes
 
 * **Tuning:** Increase $R$ for larger neighbourhoods; use $k_{aa}>0$ for cohesive same-colour clusters; set selected $k_{ab}<0$ to create inter-species segregation.
 * **Stability:** Larger $|K|$ or $R$ may require stronger damping $D$ (or smaller $\Delta t$) to avoid overshoot.
