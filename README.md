@@ -87,5 +87,5 @@ PRs that add new metrics, improve the CVI (e.g., make `CVI_WIN` operational), or
 
 ---
 
-## 📜 MIT License
+## 📜 [MIT License](LICENSE)
 
