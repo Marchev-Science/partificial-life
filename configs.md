@@ -2,14 +2,14 @@
 
 ## 🔢 Default configuration
 
-Defaults live in a top-level `DEFAULT_CONFIG` (merged with any `localStorage.simConfig` on load). Keys include: `COLORS`, `INITIAL_COUNT`, `MAX_COUNT`, `CVI_WIN`, `CANVAS_SIZE`, `RADIUS`, `MIN_DIST_FACTOR`, `INTERACTION_RANGE_INIT`, `INTERACTION_RANGE_MIN/MAX`, `SPEED`, `DAMP`, `ENTROPY_K`, `METRICS_HISTORY_LENGTH`, `CHART_UPDATE_INTERVAL`, `AUTO_START`, `INTERACTIONS` (5×5).&#x20;
+Defaults live in a top-level `DEFAULT_CONFIG` (merged with any `localStorage.simConfig` on load). Keys include: `COLORS`, `INITIAL_COUNT`, `MAX_COUNT`, `CVI_WIN`, `CANVAS_SIZE`, `RADIUS`, `MIN_DIST_FACTOR`, `INTERACTION_RANGE_INIT`, `INTERACTION_RANGE_MIN/MAX`, `SPEED`, `DAMP`, `ENTROPY_K`, `METRICS_HISTORY_LENGTH`, `CHART_UPDATE_INTERVAL`, `AUTO_START`, `INTERACTIONS` (5×5).
 
 ---
 
 ## 💾 Save / Load a JSON configuration
 
 * Click **SaveCfg** to download `sim-config.json` **and** persist to `localStorage`.
-* Click **LoadCfg** to select a JSON file; the app updates the UI (matrix spinners, sliders) and reloads to apply fully.&#x20;
+* Click **LoadCfg** to select a JSON file; the app updates the UI (matrix spinners, sliders) and reloads to apply fully.
 
 ### File schema
 
@@ -49,13 +49,13 @@ When saving, the app exports (at minimum):
 }
 ```
 
-* The app assumes equal per-colour counts when saving (`INITIAL_COUNT` mirrors the first colour slider). You can still edit counts individually after load using the UI sliders.&#x20;
+* The app assumes equal per-colour counts when saving (`INITIAL_COUNT` mirrors the first colour slider). You can still edit counts individually after load using the UI sliders.
 
 ### Edit tips
 
-* **Interaction strengths:** real numbers `[-1.0, 1.0]`. The diagonal controls same-colour cohesion; off-diagonals control cross-colour interactions.&#x20;
-* **Range & speed:** larger `INTERACTION_RANGE_INIT` increases neighbourhood size; `SPEED` is a global acceleration scale; `DAMP` applies per-tick velocity damping.&#x20;
-* **Safety:** If you load a malformed file, the app alerts “Invalid config.”&#x20;
+* **Interaction strengths:** real numbers `[-1.0, 1.0]`. The diagonal controls same-colour cohesion; off-diagonals control cross-colour interactions.
+* **Range & speed:** larger `INTERACTION_RANGE_INIT` increases neighbourhood size; `SPEED` is a global acceleration scale; `DAMP` applies per-tick velocity damping.
+* **Safety:** If you load a malformed file, the app alerts “Invalid config.”
 
 ---
 
