@@ -222,10 +222,10 @@ If you want, I can tailor this to specific numeric defaults (e.g., your $R$, $r_
 
 
 ## Read also:  
-* [Overview](README.md)
-* [General concept](docs/concept.md)
-* [Detailed methododology on metrics](docs/metrics.md)
-* [Working with configurations](docs/configs.md)
-* [Working with the API](docs/api.md)
+* [Overview](/README.md)
+* [General concept](/docs/concept.md)
+* [Detailed methododology on metrics](/docs/metrics.md)
+* [Working with configurations](/docs/configs.md)
+* [Working with the API](/docs/api.md)
 
 
