@@ -62,10 +62,12 @@ For educational and research purposes https://basaga.org/basaga_files/partificia
 ---
 
 ## Additional documentation:  
+* [Overview](README.md)
 * [General concept](docs/concept.md)
+* [Detailed methododology on metrics](docs/metrics.md)
 * [Working with configurations](docs/configs.md)
 * [Working with the API](docs/api.md)
-* [Detailed methododology on metrics](docs/metrics.md)
+
 
 ---
 
