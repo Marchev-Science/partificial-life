@@ -218,3 +218,14 @@ for each i:
 
 If you want, I can tailor this to specific numeric defaults (e.g., your $R$, $r_{\min}$, $D$, $\Delta t$) or derive a continuous-time limit.
 
+
+
+
+## Read also:  
+* [Overview](README.md)
+* [General concept](docs/concept.md)
+* [Detailed methododology on metrics](docs/metrics.md)
+* [Working with configurations](docs/configs.md)
+* [Working with the API](docs/api.md)
+
+
