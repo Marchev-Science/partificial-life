@@ -80,4 +80,13 @@ The same pattern is used by the included test harness.
 
 Open `test.html` to drive the sim from a parent page: it iframes `index.html`, waits for `simAPI`, and exposes buttons: **Check API**, **Run All Tests**, **Test Config**, **Test Lifecycle**, **Test Metrics**, **Enable/Disable Debug**, **Clear Log**. Status messages stream into a monospace log panel with time stamps.
 
+
+## Read also:  
+* [Overview](README.md)
+* [General concept](docs/concept.md)
+* [Detailed methododology on metrics](docs/metrics.md)
+* [Working with configurations](docs/configs.md)
+* [Working with the API](docs/api.md)
+
+
 ---
