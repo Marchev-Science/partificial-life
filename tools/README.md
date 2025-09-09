@@ -23,4 +23,5 @@
 * space search through the automated API system for the proper configuration of the mentioned behaviours
 * collect the set of mentioned configurations
 * use automated (decision-tree-like) analysis of the mentioned set to extract knowledge on common features of self-organizing configurations
+* analyse, draw conclusions, generalise knowledge
 * ACM Transactions on Autonomous and Adaptive Systems, Special Issue on Time-Critical Autonomous and Adaptive Systems
