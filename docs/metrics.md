@@ -171,3 +171,14 @@ large $\sigma_{\text{CVI}}$ ⇒ continuing reorganisation or intermittent bursts
 
 Use CVI alongside the four base metrics: the latter tell you *what* is happening; CVI tells you *how restless* the system is as a whole.
 
+
+
+## Read also:  
+* [Overview](README.md)
+* [General concept](docs/concept.md)
+* [Detailed methododology on metrics](docs/metrics.md)
+* [Working with configurations](docs/configs.md)
+* [Working with the API](docs/api.md)
+
+
+
