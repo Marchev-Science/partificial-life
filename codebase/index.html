@@ -751,14 +751,25 @@ window.addEventListener('DOMContentLoaded',()=>{
           startCharts(); 
         } 
       },
-      stop() { 
-        running = false; 
-        stopCharts(); 
+      stop() {
+        running = false;
+        stopCharts();
       },
-      reset() { 
+      reset() {
         $('reset').click();  // reuse existing button logic
       },
-      
+
+      /* synchronous fast-forward: run n physics ticks immediately, without
+         waiting on the (real-time, 16ms-floor) tick source. Lets a headless
+         script reach a settled state instantly instead of waiting in real
+         time; independent of running/paused state, which it restores after. */
+      step(n = 1) {
+        const wasRunning = running;
+        running = true;
+        for (let i = 0; i < n; i++) loop();
+        running = wasRunning;
+      },
+
       /* metrics access */
       getMetrics,
       
