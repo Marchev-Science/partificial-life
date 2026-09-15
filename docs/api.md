@@ -17,6 +17,10 @@ simAPI.start()
 simAPI.stop()
 simAPI.reset()
 
+// Synchronous fast-forward: run n physics ticks immediately (independent of
+// tab visibility/focus and of running/paused state, which is restored after)
+simAPI.step(n)
+
 // Metrics (latest values + step counter)
 simAPI.getMetrics() // { cluster, entropy, speed, change, cvi, step }
 
