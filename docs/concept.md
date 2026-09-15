@@ -5,15 +5,15 @@
 * **World & rendering.** A toroidal canvas (`CANVAS_SIZE×CANVAS_SIZE`), where particles wrap around edges; each particle is drawn as a filled circle (radius `RADIUS`).
 * **Forces.** For each pair within the current *interaction range*, apply a force proportional to `strength * (1 - dist / range)`. Positive strengths attract; negatives repel. Velocities are damped by `DAMP` each tick, and positions integrate with wrapping.
 * **Separation.** A minimum centre-to-centre spacing (`RADIUS × MIN_DIST_FACTOR`) resolves overlaps by pushing pairs apart.
-* **Metrics.** Every `CHART_UPDATE_INTERVAL` ms, the app computes:
+* **Metrics.** Every `round(CHART_UPDATE_INTERVAL/16)` physics ticks (≈ the old wall-clock interval at a nominal 60 Hz, but now counted in ticks rather than milliseconds so sampling no longer depends on frame rate, tab visibility, or throttling), the app computes:
 
   * *Clustering* (same-colour neighbours within 20 px),
   * *Spatial entropy* via k-NN (`ENTROPY_K`),
   * *Mean speed*,
-  * *Frame change* (avg per-particle displacement vs previous frame),
-  * *CVI* = normalized RMS of per-metric deltas (across the four series above).
+  * *Frame change* (avg per-particle displacement vs previous metrics sample),
+  * *CVI* = normalized RMS of per-metric deltas (across the four series above), each delta normalized by that metric's min–max range over its last `CVI_WIN` samples.
 
-> Note: `CVI_WIN` exists in the default config but is not currently used in the calculation loop (reserved for potential rolling-window CVI).
+> The main simulation loop runs on a persistent `setInterval` clock rather than `requestAnimationFrame`, so it keeps advancing even when the tab is backgrounded or not the active window — this is what makes headless/scripted use via `simAPI` actually work end-to-end, not just config/lifecycle control.
 
 
 ## 📊 Metrics details
@@ -24,7 +24,7 @@
 * **Frame Change:** average per-particle displacement vs previous frame (with torus-aware distance).
 * **CVI:** normalized RMS of the per-metric *deltas* (cluster, entropy, speed, change) → a quick “volatility” gauge.
 
-All series are trimmed to `METRICS_HISTORY_LENGTH` and redrawn every `CHART_UPDATE_INTERVAL` ms.
+All series are trimmed to `METRICS_HISTORY_LENGTH` and redrawn every `CHART_TICK_INTERVAL` physics ticks (see above).
 
 [More on metrics...](metrics.md)
 
@@ -78,40 +78,49 @@ Outside range, $U_{ab}$ is constant, so no force.
 ## Short-range separation (“hard-core”)
 
 To avoid overlap, impose a **minimum centre-to-centre distance** $r_{\min}>0$ (e.g., radius×factor).
-A simple linear penalty adds a repulsive term when $r_{ij} < r_{\min}$:
+**The shipped implementation is not a force term**: after the integration step (5) below, every
+overlapping pair with $r_{ij} < r_{\min}$ is resolved by an instantaneous positional correction,
+splitting the overlap distance equally between the two particles along $\hat{\mathbf{r}}_{ij}$:
 
 (3)
 
 $$
-\mathbf{F}^{\text{sep}}_{i\leftarrow j} = \gamma\,\max(0,\,r_{\min} - r_{ij})\hat{\mathbf{r}}_{ij}
+\mathbf{x}_i \mathrel{-}= \tfrac{1}{2}(r_{\min}-r_{ij})\,\hat{\mathbf{r}}_{ij}, \qquad
+\mathbf{x}_j \mathrel{+}= \tfrac{1}{2}(r_{\min}-r_{ij})\,\hat{\mathbf{r}}_{ij}
 $$
 
-with $\gamma>0$ sufficiently large. (Many implementations apply this as an instantaneous positional correction; the linear spring form above is the continuous analogue.)
+applied only when $r_{ij} < r_{\min}$. (An earlier draft of this document described a continuous
+spring-force analogue $\mathbf{F}^{\text{sep}}=\gamma\max(0,r_{\min}-r_{ij})\hat{\mathbf{r}}_{ij}$;
+that force is not implemented — the code performs the constraint-projection form above directly.)
 
 ---
 
 ## Total force and time stepping (with damping)
 
-Let $m$ be particle mass (often set to $1$), $D\in(0,1]$ a **velocity damping** factor, and $\Delta t$ the time step.
-
+The pairwise force (1) is the only force term in the implementation — the hard-core separation
+(3) is applied as a positional correction after integration, not summed into $\mathbf{F}_i$.
 Total force on particle $i$ (species $a$):
 
 (4)
 
 $$
-\mathbf{F}_i = \sum_{j\ne i}\bigl(\mathbf{F}_{i\leftarrow j} + \mathbf{F}^{\text{sep}}_{i\leftarrow j}\bigr)
+\mathbf{F}_i = \sum_{j\ne i}\mathbf{F}_{i\leftarrow j}
 $$
 
-A common explicit, damped Euler update is:
+Each simulation frame is one fixed step ($\Delta t = 1$ tick); the code applies a semi-implicit
+(symplectic) Euler update with $\alpha=$ `SPEED` as the force-to-acceleration scale and
+$D=$ `DAMP` $\in(0,1)$ the per-tick velocity retention:
 
 (5)
 
 $$
-\mathbf{v}_i^{t+1} = D\,\mathbf{v}_i^{t} + \frac{\Delta t}{m}\,\mathbf{F}_i^{t},\qquad \mathbf{x}_i^{t+1} = \mathrm{wrap}\left(\mathbf{x}_i^{t} + \Delta t\,\mathbf{v}_i^{t+1}\right)
+\mathbf{v}_i^{t+1} = D\left(\mathbf{v}_i^{t} + \alpha\,\mathbf{F}_i^{t}\right),\qquad \mathbf{x}_i^{t+1} = \mathrm{wrap}\left(\mathbf{x}_i^{t} + \mathbf{v}_i^{t+1}\right)
 $$
 
-where $\mathrm{wrap}([x,y]) = ([x\bmod L],[y\bmod L])$ maps positions back to $[0,L)$ per component.
-Because $D<1$ and $K$ may be asymmetric, momentum and mechanical energy are **not** conserved (this is typical for visually stable, interactive particle systems).
+where $\mathrm{wrap}([x,y]) = ([x\bmod L],[y\bmod L])$ maps positions back to $[0,L)$ per component,
+followed by the separation correction (3). Because $D<1$ and $K$ may be asymmetric, momentum and
+mechanical energy are **not** conserved (this is typical for visually stable, interactive particle
+systems).
 
 ---
 
@@ -186,26 +195,25 @@ for each i:
     dx = ((x[j]-x[i] + L/2) % L) - L/2
     dy = ((y[j]-y[i] + L/2) % L) - L/2
     r = sqrt(dx*dx + dy*dy)
-    if r > 0:
-      ux = dx / r; uy = dy / r
-
-      // finite-range pairwise force
+    if r > 0 and r < R:
+      // finite-range pairwise force only (no separate separation force term)
       phi = Math.max(0, 1 - r/R)
-      F.x += K[a_i][a_j] * phi * ux
-      F.y += K[a_i][a_j] * phi * uy
+      F.x += K[a_i][a_j] * phi * (dx/r)
+      F.y += K[a_i][a_j] * phi * (dy/r)
 
-      // short-range separation
-      sep = Math.max(0, r_min - r)
-      F.x += gamma * sep * ux
-      F.y += gamma * sep * uy
+  // semi-implicit (symplectic) Euler step, one tick = one Delta t
+  v[i].x = D * (v[i].x + SPEED * F.x)
+  v[i].y = D * (v[i].y + SPEED * F.y)
+  x[i].x = (x[i].x + v[i].x + L) % L
+  x[i].y = (x[i].y + v[i].y + L) % L
 
-  // damped Euler step
-  v[i].x = D * v[i].x + dt * F.x
-  v[i].y = D * v[i].y + dt * F.y
-  x[i].x = (x[i].x + dt * v[i].x) % L
-  x[i].y = (x[i].y + dt * v[i].y) % L
-  if (x[i].x < 0) x[i].x += L
-  if (x[i].y < 0) x[i].y += L
+// second pass, after all positions are updated: resolve overlaps directly
+for each pair (i, j), i < j:
+  dx, dy, r = toroidal displacement/distance as above
+  if r > 0 and r < r_min:
+    ux = dx / r; uy = dy / r
+    overlap = (r_min - r) / 2
+    x[i] -= overlap * (ux, uy);  x[j] += overlap * (ux, uy)   // wrapped into [0,L)
 ```
 
 ---

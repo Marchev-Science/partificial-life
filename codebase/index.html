@@ -197,24 +197,29 @@ const CONFIG = (()=>{
 <!-- ==================================================================== -->
 <script>
 window.addEventListener('DOMContentLoaded',()=>{
-  /* -------------------- bind CONFIG → local constants ----------------- */
+  /* -------------------- bind CONFIG → local state ---------------------
+     `let`, not `const`: every one of these is also a valid simAPI.loadConfig()
+     key, and applyConfig() (below) updates the corresponding binding directly
+     so a runtime loadConfig() call actually takes effect, not just the four
+     fields (range/population/matrix/autostart) it previously touched. */
   const COLORS  = CONFIG.COLORS;
   const INIT_CT = CONFIG.INITIAL_COUNT;
-  const MAX_CT  = CONFIG.MAX_COUNT;
-  const R       = CONFIG.RADIUS;
-  const MIN_DIST= R*CONFIG.MIN_DIST_FACTOR;
-  const SPEED   = CONFIG.SPEED;
-  const DAMP    = CONFIG.DAMP;
-  const MET_HIST= CONFIG.METRICS_HISTORY_LENGTH;
-  const ENT_K   = CONFIG.ENTROPY_K;
-  const CHART_INTERVAL = CONFIG.CHART_UPDATE_INTERVAL;
-  const CVI_WIN = CONFIG.CVI_WIN;
+  let MAX_CT  = CONFIG.MAX_COUNT;
+  let R       = CONFIG.RADIUS;
+  let MIN_DIST_FACTOR = CONFIG.MIN_DIST_FACTOR;
+  let MIN_DIST= R*MIN_DIST_FACTOR;
+  let SPEED   = CONFIG.SPEED;
+  let DAMP    = CONFIG.DAMP;
+  let MET_HIST= CONFIG.METRICS_HISTORY_LENGTH;
+  let ENT_K   = CONFIG.ENTROPY_K;
+  let CHART_INTERVAL = CONFIG.CHART_UPDATE_INTERVAL;
+  let CVI_WIN = CONFIG.CVI_WIN;
 
   /* -------------------- DOM references ------------------------------- */
   const $=id=>document.getElementById(id);
   const cvs=$('sim'), ctx=cvs.getContext('2d');
   cvs.width=cvs.height=CONFIG.CANVAS_SIZE;
-  const W=cvs.width, H=cvs.height;
+  let W=cvs.width, H=cvs.height;
 
   /* -------------------- UI construction ------------------------------ */
   const sliderGrid=$('slider-grid');
@@ -287,7 +292,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(prevVals){
       let sumSq=0;
       ['cluster','entropy','speed','change'].forEach(key=>{
-        const rng=Math.max(...series[key])-Math.min(...series[key])||1;
+        const windowed=series[key].slice(-CVI_WIN);
+        const rng=Math.max(...windowed)-Math.min(...windowed)||1;
         const dz=(cur[key]-prevVals[key])/rng;
         sumSq+=dz*dz;
       });
@@ -318,8 +324,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     drawChart(charts.change,series.change,'#9b59b6');
     drawChart(charts.cvi,series.cvi,'#1abc9c');
   };
-  const startCharts=()=>{if(chartTimer===null) chartTimer=setInterval(()=>{computeMetrics(); updateCharts();},CHART_INTERVAL);} ;
-  const stopCharts=()=>{clearInterval(chartTimer); chartTimer=null;};
+  const startCharts=()=>{};  // metrics sampling is now driven by loop()'s own physics-tick counter
+  const stopCharts=()=>{};
 
   /* -------------------- physics & rendering --------------------------- */
   let interactionRange=CONFIG.INTERACTION_RANGE_INIT;
@@ -355,7 +361,25 @@ window.addEventListener('DOMContentLoaded',()=>{
 
   /* -------------------- main loop ------------------------------------ */
   let running=CONFIG.AUTO_START;
-  const loop=()=>{if(!running) return; physics(); render(); requestAnimationFrame(loop);} ;
+  let physicsTicks=0;
+  let CHART_TICK_INTERVAL = Math.max(1, Math.round(CHART_INTERVAL/16)); // ticks per metrics sample, derived from the old ms interval at a nominal 60 Hz
+  const loop=()=>{
+    if(!running) return;
+    physics(); render(); physicsTicks++;
+    if(physicsTicks % CHART_TICK_INTERVAL === 0){ computeMetrics(); updateCharts(); }
+  };
+  /* Dedicated Worker as the tick source: a document's own setInterval/requestAnimationFrame
+     timers are throttled (eventually to ~1/minute) once the tab is backgrounded, but a Worker's
+     timers are not subject to that page-visibility throttling, so the simulation keeps advancing
+     whether this tab is foregrounded, backgrounded, or driven headlessly via simAPI. The worker
+     only arms its next 16ms timeout when asked (self-paced request/acknowledge), so if a tick
+     (physics + occasional metrics computation) ever takes longer than 16ms, ticks slow down
+     gracefully instead of queuing up an unbounded backlog. */
+  const tickWorker = new Worker(URL.createObjectURL(new Blob(
+    ['onmessage=()=>setTimeout(()=>postMessage(1), 16);'], {type:'application/javascript'}
+  )));
+  tickWorker.onmessage = () => { loop(); tickWorker.postMessage(1); };
+  tickWorker.postMessage(1);
 
   /* -------------------- Number Lock factory --------------------------------- */
   const createNumberLock = (cellId, key) => {
@@ -552,6 +576,10 @@ window.addEventListener('DOMContentLoaded',()=>{
     cfg.INTERACTION_RANGE_INIT=interactionRange;
     cfg.INTERACTIONS=COLORS.map(r=>COLORS.map(c=>strengths[`${r.key[0]}2${c.key[0]}`]));
     cfg.INITIAL_COUNT=desiredCounts[COLORS[0].key]; // assume all equal for save convenience
+    // Reflect every other field applyConfig() can change at runtime, not just the frozen defaults.
+    cfg.CANVAS_SIZE=W; cfg.RADIUS=R; cfg.MIN_DIST_FACTOR=MIN_DIST_FACTOR;
+    cfg.SPEED=SPEED; cfg.DAMP=DAMP; cfg.ENTROPY_K=ENT_K; cfg.METRICS_HISTORY_LENGTH=MET_HIST;
+    cfg.CVI_WIN=CVI_WIN; cfg.MAX_COUNT=MAX_CT; cfg.CHART_UPDATE_INTERVAL=CHART_INTERVAL;
     return cfg;
   };
   $('saveCfg').addEventListener('click',()=>{
@@ -643,6 +671,32 @@ window.addEventListener('DOMContentLoaded',()=>{
         loop();
         startCharts();
       }
+
+      // Apply every other recognized field directly, so loadConfig() actually
+      // matches its documented "accepts an object with any of the config keys"
+      // contract instead of silently dropping everything but the four fields
+      // above.
+      if (cfg.CANVAS_SIZE !== undefined) {
+        W = H = cvs.width = cvs.height = cfg.CANVAS_SIZE;
+      }
+      if (cfg.RADIUS !== undefined) R = cfg.RADIUS;
+      if (cfg.MIN_DIST_FACTOR !== undefined) MIN_DIST_FACTOR = cfg.MIN_DIST_FACTOR;
+      if (cfg.RADIUS !== undefined || cfg.MIN_DIST_FACTOR !== undefined) {
+        MIN_DIST = R * MIN_DIST_FACTOR;
+      }
+      if (cfg.SPEED !== undefined) SPEED = cfg.SPEED;
+      if (cfg.DAMP !== undefined) DAMP = cfg.DAMP;
+      if (cfg.ENTROPY_K !== undefined) ENT_K = cfg.ENTROPY_K;
+      if (cfg.METRICS_HISTORY_LENGTH !== undefined) MET_HIST = cfg.METRICS_HISTORY_LENGTH;
+      if (cfg.CVI_WIN !== undefined) CVI_WIN = cfg.CVI_WIN;
+      if (cfg.MAX_COUNT !== undefined) {
+        MAX_CT = cfg.MAX_COUNT;
+        COLORS.forEach(c => { const s = $(`${c.key}Slider`); if (s) s.max = MAX_CT; });
+      }
+      if (cfg.CHART_UPDATE_INTERVAL !== undefined) {
+        CHART_INTERVAL = cfg.CHART_UPDATE_INTERVAL;
+        CHART_TICK_INTERVAL = Math.max(1, Math.round(CHART_INTERVAL / 16));
+      }
     };
 
     /* --- condition watchers ----------------------------------- */
@@ -697,14 +751,25 @@ window.addEventListener('DOMContentLoaded',()=>{
           startCharts(); 
         } 
       },
-      stop() { 
-        running = false; 
-        stopCharts(); 
+      stop() {
+        running = false;
+        stopCharts();
       },
-      reset() { 
+      reset() {
         $('reset').click();  // reuse existing button logic
       },
-      
+
+      /* synchronous fast-forward: run n physics ticks immediately, without
+         waiting on the (real-time, 16ms-floor) tick source. Lets a headless
+         script reach a settled state instantly instead of waiting in real
+         time; independent of running/paused state, which it restores after. */
+      step(n = 1) {
+        const wasRunning = running;
+        running = true;
+        for (let i = 0; i < n; i++) loop();
+        running = wasRunning;
+      },
+
       /* metrics access */
       getMetrics,
       
