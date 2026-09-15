@@ -287,7 +287,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(prevVals){
       let sumSq=0;
       ['cluster','entropy','speed','change'].forEach(key=>{
-        const rng=Math.max(...series[key])-Math.min(...series[key])||1;
+        const windowed=series[key].slice(-CVI_WIN);
+        const rng=Math.max(...windowed)-Math.min(...windowed)||1;
         const dz=(cur[key]-prevVals[key])/rng;
         sumSq+=dz*dz;
       });
@@ -318,8 +319,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     drawChart(charts.change,series.change,'#9b59b6');
     drawChart(charts.cvi,series.cvi,'#1abc9c');
   };
-  const startCharts=()=>{if(chartTimer===null) chartTimer=setInterval(()=>{computeMetrics(); updateCharts();},CHART_INTERVAL);} ;
-  const stopCharts=()=>{clearInterval(chartTimer); chartTimer=null;};
+  const startCharts=()=>{};  // metrics sampling is now driven by loop()'s own physics-tick counter
+  const stopCharts=()=>{};
 
   /* -------------------- physics & rendering --------------------------- */
   let interactionRange=CONFIG.INTERACTION_RANGE_INIT;
@@ -355,7 +356,14 @@ window.addEventListener('DOMContentLoaded',()=>{
 
   /* -------------------- main loop ------------------------------------ */
   let running=CONFIG.AUTO_START;
-  const loop=()=>{if(!running) return; physics(); render(); requestAnimationFrame(loop);} ;
+  let physicsTicks=0;
+  const CHART_TICK_INTERVAL = Math.max(1, Math.round(CHART_INTERVAL/16)); // ticks per metrics sample, derived from the old ms interval at a nominal 60 Hz
+  const loop=()=>{
+    if(!running) return;
+    physics(); render(); physicsTicks++;
+    if(physicsTicks % CHART_TICK_INTERVAL === 0){ computeMetrics(); updateCharts(); }
+  };
+  setInterval(loop, 16); // persistent clock; keeps running regardless of tab visibility/focus, unlike requestAnimationFrame
 
   /* -------------------- Number Lock factory --------------------------------- */
   const createNumberLock = (cellId, key) => {

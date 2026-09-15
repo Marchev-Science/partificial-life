@@ -2,6 +2,19 @@
 
 Listing metrics that practitioners of pattern-formation, complex-systems, and agent-based modelling commonly use. Below are concise, implementation-ready definitions of the **five metrics** you asked to keep, adjusted to match your simulation’s specifics (continuous screen, multicolour particles).  No code—just the mathematics, what each term means, and practical notes.
 
+> **Implementation note.** Sections 1 and 4 below describe the *generalized* statistics
+> (Ripley's $K$, SSIM) that motivated this metrics suite's design. The shipped `codebase/index.html`
+> uses lighter-weight proxies instead, for real-time performance:
+> - **Clustering** is the mean count of same-colour neighbours within a fixed 20 px radius (no
+>   area/$N^2$ normalization, no edge correction, no $r$-sweep) — not $K_\mathrm{col}(r)$ as defined
+>   below.
+> - **Frame change** ("$R_\text{change}$") is the mean per-particle Euclidean displacement (toroidal
+>   distance) between consecutive metrics samples — there is no image rendering, grayscale
+>   conversion, or SSIM computation in the code.
+>
+> Section 5 (CVI) *is* implemented as described, including the `CVI_WIN`-windowed normalization.
+> See `docs/concept.md` for the exact formulas as implemented.
+
 ---
 
 ## 1. Colour-weighted spatial clustering
@@ -110,13 +123,13 @@ Tracking all four gives a dashboard that separates spatial order, heterogeneity,
 
 #### Step 0 — Normalise each metric
 
-Convert every raw series to a comparable scale:
+Convert every raw series to a comparable scale. **As implemented**, this is a min–max range taken over each metric's own last `CVI_WIN` samples (not a $z$-score, and not the full run history):
 
 $$
-z_k(t) = \frac{M_k(t)-\mu_k}{\sigma_k}\quad\text{or}\quad z_k(t) = \frac{M_k(t)-\min(M_k)}{\max(M_k)-\min(M_k)}
+z_k(t) = \frac{M_k(t)-M_k(t-\Delta t)}{\max_{\tau\in[t-W+1,\,t]} M_k(\tau) - \min_{\tau\in[t-W+1,\,t]} M_k(\tau)}, \qquad W=\texttt{CVI\_WIN}
 $$
 
-where $k\in\{1:K_{\text{col}},2:H,3:\langle v\rangle,4:R_{\text{change}}\}$.
+where $k\in\{1:\text{cluster},2:H,3:\langle v\rangle,4:\text{change}\}$ (the proxy metrics described in the Implementation note above, not $K_\text{col}$/SSIM).
 
 ---
 
